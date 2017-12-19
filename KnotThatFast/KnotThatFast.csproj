@@ -45,14 +45,36 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CustomControllers\KnotCanvas.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CustomControllers\KnotCanvas.Designer.cs">
+      <DependentUpon>KnotCanvas.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CustomControllers\MovablePoint.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CustomControllers\MovablePoint.Designer.cs">
+      <DependentUpon>MovablePoint.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Models\Knot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="CustomControllers\KnotCanvas.resx">
+      <DependentUpon>KnotCanvas.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CustomControllers\MovablePoint.resx">
+      <DependentUpon>MovablePoint.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -75,5 +97,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
