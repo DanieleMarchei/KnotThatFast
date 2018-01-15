@@ -34,11 +34,11 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Red;
-            this.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.BackColor = System.Drawing.Color.White;
             this.Cursor = System.Windows.Forms.Cursors.SizeAll;
             this.Name = "MovablePoint";
-            this.Size = new System.Drawing.Size(7, 7);
+            this.Size = new System.Drawing.Size(10, 10);
+            this.Load += new System.EventHandler(this.MovablePoint_Load);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.MovablePoint_MouseDown);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MovablePoint_MouseMove);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.MovablePoint_MouseUp);
