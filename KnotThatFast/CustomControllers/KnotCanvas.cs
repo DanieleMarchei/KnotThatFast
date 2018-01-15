@@ -45,7 +45,7 @@ namespace KnotThatFast.CustomControllers
                         {
                             //under cross
                             MovablePoint movPoint = new MovablePoint(new Point(e.X, e.Y));
-                            movPoint.MouseMove += MovPoint_MouseMove;
+                            //movPoint.MouseMove += MovPoint_MouseMove;
                             points.Add(movPoint);
                             canvas_pic.Controls.Add(movPoint);
 
@@ -69,9 +69,10 @@ namespace KnotThatFast.CustomControllers
                         {
                             //over cross
                             MovablePoint movPoint = new MovablePoint(new Point(e.X, e.Y));
-                            movPoint.MouseMove += MovPoint_MouseMove;
+                            //movPoint.MouseMove += MovPoint_MouseMove;
                             points.Add(movPoint);
                             canvas_pic.Controls.Add(movPoint);
+                            
 
                             if (points.Count >= 2)
                             {
@@ -243,23 +244,6 @@ namespace KnotThatFast.CustomControllers
             KnotIsClosed = true;
 
             List<int> gaussCode = new List<int>();
-
-            //int crossIndex = 1;
-            //foreach (IntersectionPoint interP in OrderedIntersectionPoints)
-            //{
-            //    if (interP.CrossingType == CrossingType.Over)
-            //    {
-            //        gaussCode.Add(crossIndex);
-            //        interP.gaussCross = crossIndex;
-            //    }
-            //    else
-            //    {
-            //        gaussCode.Add(-crossIndex);
-            //        interP.gaussCross = -crossIndex;
-            //    }
-            //    crossIndex++;
-            //}
-
 
             /* starting from the start A, get all the intersections K in AB
              * order all intersection i in K by distance with A

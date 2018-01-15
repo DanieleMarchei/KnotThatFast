@@ -33,6 +33,7 @@
             this.solve_btn = new System.Windows.Forms.Button();
             this.clear_btn = new System.Windows.Forms.Button();
             this.close_btn = new System.Windows.Forms.Button();
+            this.help_btn = new System.Windows.Forms.Button();
             this.knotCanvas = new KnotThatFast.CustomControllers.KnotCanvas();
             this.SuspendLayout();
             // 
@@ -84,6 +85,17 @@
             this.close_btn.UseVisualStyleBackColor = true;
             this.close_btn.Click += new System.EventHandler(this.close_btn_Click);
             // 
+            // help_btn
+            // 
+            this.help_btn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.help_btn.Location = new System.Drawing.Point(534, 12);
+            this.help_btn.Name = "help_btn";
+            this.help_btn.Size = new System.Drawing.Size(78, 23);
+            this.help_btn.TabIndex = 8;
+            this.help_btn.Text = "Help";
+            this.help_btn.UseVisualStyleBackColor = true;
+            this.help_btn.Click += new System.EventHandler(this.help_btn_Click);
+            // 
             // knotCanvas
             // 
             this.knotCanvas.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -101,6 +113,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 421);
+            this.Controls.Add(this.help_btn);
             this.Controls.Add(this.knotCanvas);
             this.Controls.Add(this.close_btn);
             this.Controls.Add(this.clear_btn);
@@ -124,6 +137,7 @@
         private System.Windows.Forms.Button clear_btn;
         private System.Windows.Forms.Button close_btn;
         private CustomControllers.KnotCanvas knotCanvas;
+        private System.Windows.Forms.Button help_btn;
     }
 }
 

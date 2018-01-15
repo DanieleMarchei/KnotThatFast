@@ -45,5 +45,11 @@ namespace KnotThatFast
         {
             knotCanvas.CloseKnot();
         }
+
+        private void help_btn_Click(object sender, EventArgs e)
+        {
+            HelpForm h = new HelpForm();
+            h.Show();
+        }
     }
 }
