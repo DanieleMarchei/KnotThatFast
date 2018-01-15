@@ -24,6 +24,7 @@ namespace KnotThatFast.Models
             }
         }
         public int NumberOfCrossings { get { return GaussCode.Count / 2; } }
+        public bool IsUnknot { get { return GaussCode.Count == 0; } }
 
         public Knot(List<int> code)
         {
@@ -37,24 +38,86 @@ namespace KnotThatFast.Models
             GaussCode = new List<int>();
         }
 
+        public Knot(Knot knot)
+        {
+            GaussCode = new List<int>(knot.GaussCode);
+        }
+
         /*
          * 1- 0 is not allowed, because 0 = -0
          * 2- Every cross has to appear twice, positive and negative
          */
         private bool IsGaussCodeCorrect()
         {
-            bool not_contains_zero = !GaussCode.Contains(0);
-            bool twice = GaussCode.TrueForAll(c1 => gaussCode.Exists(c2 => c1 == -c2));
-            return not_contains_zero && twice;
+            bool notContainsZero = !GaussCode.Contains(0);
+            bool everyCrossTwice = GaussCode.TrueForAll(c1 => gaussCode.Exists(c2 => c1 == -c2));
+            return notContainsZero && everyCrossTwice;
         }
 
-        public Knot Solve()
+        static public Knot Step(Knot knot)
         {
-            Knot solved = null;
 
-            //apply algorithm
+            /*
+             * Reduction Move 2
+             * Reduction Move 1
+             * try every translation move (1 and 2)
+             * - if 1 move is possible, do it
+             * - if >1 moves must be taken, TO DO 
+             */
+            throw new NotImplementedException();
+        }
+
+        static public Knot Solve(Knot knot)
+        {
+            if (knot.IsUnknot) return knot;
+
+            Knot solved = new Knot(knot);
+
+            bool triedEveryOperation = false;
+
+            while (!solved.IsUnknot && !triedEveryOperation)
+            {
+                try
+                {
+                    solved = Knot.Step(solved);
+                }
+                catch (ArgumentException e)
+                {
+                    triedEveryOperation = true;
+                }
+            }
 
             return solved;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(obj is Knot)
+            {
+                Knot other = (Knot)obj;
+
+                if(other.GaussCode.Count == this.GaussCode.Count)
+                {
+                    //if the two code contains the same numbers
+                    if(this.GaussCode.Except(other.GaussCode).Count() == 0)
+                    {
+                        //pick the location in with this[0] == other and check if the order is maintained
+                        int start = other.GaussCode.IndexOf(this.GaussCode[0]);
+                        for (int i = 0; i < this.GaussCode.Count; i++)
+                        {
+                            if (this.GaussCode[i] == other.GaussCode[start])
+                                start = (start + 1) % this.GaussCode.Count;
+                            else
+                                return false;
+                        }
+
+                        return true;
+                    }
+                    return false;
+                }
+                return false;
+            }
+            return false;
         }
 
     }
