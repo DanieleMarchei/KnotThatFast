@@ -48,7 +48,14 @@ namespace KnotThatFast.Models
             return not_contains_zero && twice;
         }
 
+        public Knot Solve()
+        {
+            Knot solved = null;
 
+            //apply algorithm
+
+            return solved;
+        }
 
     }
 }

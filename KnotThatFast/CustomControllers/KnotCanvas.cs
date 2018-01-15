@@ -219,7 +219,7 @@ namespace KnotThatFast.CustomControllers
 
         public Knot GetKnot()
         {
-            if(Knot == null)
+            if (Knot == null)
             {
                 throw new Exception("Knot has to be closed before getting it.");
             }
@@ -244,21 +244,21 @@ namespace KnotThatFast.CustomControllers
 
             List<int> gaussCode = new List<int>();
 
-            int crossIndex = 1;
-            foreach (IntersectionPoint interP in OrderedIntersectionPoints)
-            {
-                if (interP.CrossingType == CrossingType.Over)
-                {
-                    gaussCode.Add(crossIndex);
-                    interP.gaussCross = crossIndex;
-                }
-                else
-                {
-                    gaussCode.Add(-crossIndex);
-                    interP.gaussCross = -crossIndex;
-                }
-                crossIndex++;
-            }
+            //int crossIndex = 1;
+            //foreach (IntersectionPoint interP in OrderedIntersectionPoints)
+            //{
+            //    if (interP.CrossingType == CrossingType.Over)
+            //    {
+            //        gaussCode.Add(crossIndex);
+            //        interP.gaussCross = crossIndex;
+            //    }
+            //    else
+            //    {
+            //        gaussCode.Add(-crossIndex);
+            //        interP.gaussCross = -crossIndex;
+            //    }
+            //    crossIndex++;
+            //}
 
 
             /* starting from the start A, get all the intersections K in AB
@@ -266,7 +266,7 @@ namespace KnotThatFast.CustomControllers
              * map each i with the corrisponding intersection OrderedIntersectionPoints
              * if the i intersction in under, set over and viceversa
              */
-
+            int crossIndex = 1;
             for (int i = 0; i < points.Count - 1; i++)
             {
                 List<Point> pinter = GetIntersections(points[i].Position, points[i + 1].Position);
@@ -278,8 +278,33 @@ namespace KnotThatFast.CustomControllers
                 inters = inters.OrderBy(p => p.Distance(points[i].Position)).ToList();
                 foreach (IntersectionPoint p in inters)
                 {
-                    if(gaussCode.Contains(p.gaussCross) && !gaussCode.Contains(-p.gaussCross))
-                        gaussCode.Add(-p.gaussCross);
+                    if (p.gaussCross == 0)
+                    {
+                        p.gaussCross = crossIndex++;
+                    }
+                    if (!gaussCode.Contains(p.gaussCross) && !gaussCode.Contains(-p.gaussCross))
+                    {
+                        if (p.CrossingType == CrossingType.Over)
+                        {
+                            gaussCode.Add(-p.gaussCross);
+                        }
+                        else
+                        {
+                            gaussCode.Add(p.gaussCross);
+                        } 
+                    }
+                    else
+                    {
+                        if (gaussCode.Contains(p.gaussCross) && !gaussCode.Contains(-p.gaussCross))
+                        {
+                            gaussCode.Add(-p.gaussCross);
+                        }
+                        else
+                        {
+                            gaussCode.Add(p.gaussCross);  
+                        }
+                    }
+
                 }
             }
             foreach (int cross in gaussCode)
