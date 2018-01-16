@@ -35,11 +35,21 @@ namespace KnotTest
 
 
         [TestMethod]
-        public void TestSolveOK()
+        public void TestSolve1OK()
         {
             //Figure eight with an extra twist
             Knot knot = new Knot(new List<int>() { -1, 2, -3, 4, -4, 5, -2, 1, -5, 3 });
-            Knot solved = new Knot(new List<int>() { -1, 2, -3, 4, -2, 1, -4, 3 });
+            Knot solved = new Knot(new List<int>() { -1, 2, -3, 5, -2, 1, -5, 3 });
+            knot = Knot.Solve(knot);
+            Assert.AreEqual(solved, knot);
+        }
+
+        [TestMethod]
+        public void TestSolve2OK()
+        {
+            //Figure eight with an extra twist
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, 4, 5, 6, -6, -5, -4, -1, 2, -3 });
+            Knot solved = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3 });
             knot = Knot.Solve(knot);
             Assert.AreEqual(solved, knot);
         }
@@ -58,6 +68,33 @@ namespace KnotTest
             Knot k1 = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3 });
             Knot k2 = new Knot(new List<int>() { -2, 1, -3, 3, -1, 2 });
             Assert.AreNotEqual(k1, k2);
+        }
+
+        [TestMethod]
+        public void TestMove1IsOK()
+        {
+            Knot knot = new Knot(new List<int>() { -1, 2, -3, 4, -4, 5, -2, 1, -5, 3 });
+            PrivateObject obj = new PrivateObject(knot);
+            int? test = (int?)obj.Invoke("getPositionForMove1");
+            if (test.HasValue)
+                Assert.AreEqual(test, 3);
+            else
+                Assert.Fail();
+        }
+
+        [TestMethod]
+        public void TestMove2IsOK()
+        {
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, 4, 5, 6, -6, -5, -4, -1, 2, -3 });
+            PrivateObject obj = new PrivateObject(knot);
+            Tuple<int, int> test = (Tuple<int, int>)obj.Invoke("getPositionsForMove2");
+            if (test != null)
+            {
+                Assert.AreEqual(test.Item1, 3);
+                Assert.AreEqual(test.Item2, 7);
+            }
+            else
+                Assert.Fail();
         }
     }
 }

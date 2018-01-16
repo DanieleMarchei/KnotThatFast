@@ -33,6 +33,10 @@ namespace KnotThatFast.CustomControllers
             drawArea = new Bitmap(canvas_pic.Size.Width, canvas_pic.Size.Height);
             g = Graphics.FromImage(drawArea);
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            //TEST
+            //Knot knot = new Knot(new List<int>() { -1, 2, -3, 4, -4, 5, -2, 1, -5, 3 });
+            //Knot.Solve(knot);
         }
 
         private void canvas_pic_MouseClick(object sender, MouseEventArgs e)
@@ -230,12 +234,14 @@ namespace KnotThatFast.CustomControllers
 
         public void Step()
         {
-            throw new NotImplementedException();
+            if (Knot != null)
+                Knot = Knot.Step(Knot);
         }
 
         public void Solve()
         {
-            throw new NotImplementedException();
+            if (Knot != null)
+                Knot = Knot.Solve(Knot);
         }
 
         private void CalculateGaussCode()

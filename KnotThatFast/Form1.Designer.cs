@@ -55,6 +55,7 @@
             this.step_btn.TabIndex = 1;
             this.step_btn.Text = "Step";
             this.step_btn.UseVisualStyleBackColor = true;
+            this.step_btn.Click += new System.EventHandler(this.step_btn_Click);
             // 
             // solve_btn
             // 
@@ -64,6 +65,7 @@
             this.solve_btn.TabIndex = 2;
             this.solve_btn.Text = "Solve";
             this.solve_btn.UseVisualStyleBackColor = true;
+            this.solve_btn.Click += new System.EventHandler(this.solve_btn_Click);
             // 
             // clear_btn
             // 

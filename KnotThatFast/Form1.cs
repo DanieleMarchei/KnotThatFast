@@ -51,5 +51,15 @@ namespace KnotThatFast
             HelpForm h = new HelpForm();
             h.Show();
         }
+
+        private void step_btn_Click(object sender, EventArgs e)
+        {
+            knotCanvas.Step();
+        }
+
+        private void solve_btn_Click(object sender, EventArgs e)
+        {
+            knotCanvas.Solve();
+        }
     }
 }
