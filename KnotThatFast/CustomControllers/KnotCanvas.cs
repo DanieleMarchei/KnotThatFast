@@ -21,7 +21,9 @@ namespace KnotThatFast.CustomControllers
         public bool KnotIsClosed = false;
         public bool Closable { get { return points.Count >= 3 && !KnotIsClosed; } }
         private Knot Knot;
-        private List<IntersectionPoint> OrderedIntersectionPoints = new List<IntersectionPoint>();
+        //private List<IntersectionPoint> OrderedIntersectionPoints = new List<IntersectionPoint>();
+        private List<Line> lines = new List<Line>();
+        int indexCross = 1;
 
         public KnotCanvas()
         {
@@ -32,7 +34,7 @@ namespace KnotThatFast.CustomControllers
         {
             drawArea = new Bitmap(canvas_pic.Size.Width, canvas_pic.Size.Height);
             g = Graphics.FromImage(drawArea);
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
 
             //TEST
             //Knot knot = new Knot(new List<int>() { -1, 2, -3, 4, -4, 5, -2, 1, -5, 3 });
@@ -43,58 +45,51 @@ namespace KnotThatFast.CustomControllers
         {
             if (!KnotIsClosed)
             {
-                switch (e.Button)
+                Point newP = new Point(e.X, e.Y);
+                newP = new Point(e.X, e.Y);
+                MovablePoint movPoint = new MovablePoint(newP);
+                //movPoint.MouseMove += MovPoint_MouseMove;
+
+                if(e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
                 {
-                    case MouseButtons.Left:
+                    CrossingType crossType = e.Button == MouseButtons.Left ? CrossingType.Under : CrossingType.Over;
+                    char charType = e.Button == MouseButtons.Left ? 'U' : 'O';
+                    points.Add(movPoint);
+                    canvas_pic.Controls.Add(movPoint);
+
+                    if (points.Count >= 2)
+                    {
+                        MovablePoint beforeLast = points.Skip(points.Count - 2).First();
+                        Line line = new Line(beforeLast, movPoint);
+                        MovablePoint last = points.Last();
+                        List<Point> interPoints = new List<Point>();
+                        for (int i = 0; i < lines.Count; i++)
                         {
-                            //under cross
-                            MovablePoint movPoint = new MovablePoint(new Point(e.X, e.Y));
-                            //movPoint.MouseMove += MovPoint_MouseMove;
-                            points.Add(movPoint);
-                            canvas_pic.Controls.Add(movPoint);
-
-                            if (points.Count >= 2)
+                            Point? p = line.Intersect(lines[i]);
+                            if (p.HasValue)
                             {
-                                MovablePoint last = points.Last();
-                                MovablePoint beforeLast = points.Skip(points.Count - 2).First();
-                                List<Point> interPoints = GetIntersections(last.Position, beforeLast.Position);
-                                if (interPoints.Count > 0)
-                                    gaussCode_txt.Text += new string('U', interPoints.Count);
-                                List<IntersectionPoint> intersectionPoints = interPoints
-                                    .Select(p => new IntersectionPoint(p, CrossingType.Under))
-                                    .OrderBy(p => p.Distance(beforeLast.Position))
-                                    .ToList();
-                                OrderedIntersectionPoints.AddRange(intersectionPoints);
+                                if(!lines[i].Intersections.Any(ip => ip.Distance(p.Value) <= 5))
+                                {
+                                    interPoints.Add(p.Value);
 
+                                    IntersectionPoint p1 = new IntersectionPoint(p.Value, crossType);
+                                    IntersectionPoint p2 = new IntersectionPoint(p.Value, crossType == CrossingType.Over ? CrossingType.Under : CrossingType.Over);
+                                    p1.gaussCross = crossType == CrossingType.Over ? indexCross : -indexCross;
+                                    p2.gaussCross = -p1.gaussCross;
+                                    indexCross++;
+                                    line.Intersections.Add(p1);
+                                    lines[i].Intersections.Add(p2);
+                                    lines[i].OrderPoints();
+                                }
                             }
-                            break;
-                        }
-                    case MouseButtons.Right:
-                        {
-                            //over cross
-                            MovablePoint movPoint = new MovablePoint(new Point(e.X, e.Y));
-                            //movPoint.MouseMove += MovPoint_MouseMove;
-                            points.Add(movPoint);
-                            canvas_pic.Controls.Add(movPoint);
-                            
-
-                            if (points.Count >= 2)
-                            {
-                                MovablePoint last = points.Last();
-                                MovablePoint beforeLast = points.Skip(points.Count - 2).First();
-                                List<Point> interPoints = GetIntersections(last.Position, beforeLast.Position);
-                                if (interPoints.Count > 0)
-                                    gaussCode_txt.Text += new string('O', interPoints.Count);
-                                List<IntersectionPoint> intersectionPoints = interPoints
-                                    .Select(p => new IntersectionPoint(p, CrossingType.Over))
-                                    .OrderBy(p => p.Distance(beforeLast.Position))
-                                    .ToList();
-                                OrderedIntersectionPoints.AddRange(intersectionPoints);
-
-                            }
-                            break;
                         }
 
+                        line.OrderPoints();
+                        lines.Add(line);
+
+                        if (interPoints.Count > 0)
+                            gaussCode_txt.Text += new string(charType, interPoints.Count);
+                    }
                 }
 
                 if (points.Count >= 2)
@@ -115,63 +110,6 @@ namespace KnotThatFast.CustomControllers
                 g.DrawLines(new Pen(Color.Blue), points.Select(p => p.Position).ToArray());
                 canvas_pic.Image = drawArea;
             }
-        }
-
-        private void LineIntersect(Point p0, Point p1, Point p2, Point p3, out Point? intersectP)
-        {
-            intersectP = null;
-            Point s1 = new Point(p1.X - p0.X, p1.Y - p0.Y);
-            Point s2 = new Point(p3.X - p2.X, p3.Y - p2.Y);
-
-            float denom = -s2.X * s1.Y + s1.X * s2.Y;
-            float s = (-s1.Y * (p0.X - p2.X) + s1.X * (p0.Y - p2.Y)) / denom;
-            float t = (s2.X * (p0.Y - p2.Y) - s2.Y * (p0.X - p2.X)) / denom;
-
-            if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
-            {
-                intersectP = new Point(p0.X + (int)(t * s1.X), p0.Y + (int)(t * s1.Y));
-            }
-
-        }
-
-        private List<Point> GetIntersections(Point p0, Point p1)
-        {
-            List<Point> intersections = new List<Point>();
-            for (int j = 0; j < points.Count - 1; j++)
-            {
-                Point p2 = points[j].Position;
-                Point p3 = points[j + 1].Position;
-                Point? intersect;
-                LineIntersect(p0, p1, p2, p3, out intersect);
-                if (intersect != null && intersect != p0 && intersect != p1 && intersect != p2 && intersect != p3)
-                {
-                    intersections.Add(intersect.Value);
-                }
-            }
-
-            return intersections;
-        }
-
-        private List<Point> Intersections()
-        {
-            List<Point> intersections = new List<Point>();
-            for (int i = 0; i < points.Count - 1; i++)
-            {
-                Point p1 = points[i].Position;
-                Point p2 = points[i + 1].Position;
-                for (int j = i + 1; j < points.Count - 1; j++)
-                {
-                    Point p3 = points[j].Position;
-                    Point p4 = points[j + 1].Position;
-                    Point? intersect;
-                    LineIntersect(p1, p2, p3, p4, out intersect);
-                    if (intersect != null && intersect != p1 && intersect != p2 && intersect != p3 && intersect != p4)
-                    {
-                        intersections.Add(intersect.Value);
-                    }
-                }
-            }
-            return intersections;
         }
 
         private Point[] CreateOpenBezier(Point[] _points)
@@ -251,50 +189,11 @@ namespace KnotThatFast.CustomControllers
 
             List<int> gaussCode = new List<int>();
 
-            /* starting from the start A, get all the intersections K in AB
-             * order all intersection i in K by distance with A
-             * map each i with the corrisponding intersection OrderedIntersectionPoints
-             * if the i intersction in under, set over and viceversa
-             */
-            int crossIndex = 1;
-            for (int i = 0; i < points.Count - 1; i++)
+            foreach (Line l in lines)
             {
-                List<Point> pinter = GetIntersections(points[i].Position, points[i + 1].Position);
-                List<IntersectionPoint> inters = new List<IntersectionPoint>();
-                foreach (Point p in pinter)
+                foreach(IntersectionPoint p in l.Intersections)
                 {
-                    inters.Add(OrderedIntersectionPoints.Single(k => k.Distance(p) < 5));
-                }
-                inters = inters.OrderBy(p => p.Distance(points[i].Position)).ToList();
-                foreach (IntersectionPoint p in inters)
-                {
-                    if (p.gaussCross == 0)
-                    {
-                        p.gaussCross = crossIndex++;
-                    }
-                    if (!gaussCode.Contains(p.gaussCross) && !gaussCode.Contains(-p.gaussCross))
-                    {
-                        if (p.CrossingType == CrossingType.Over)
-                        {
-                            gaussCode.Add(-p.gaussCross);
-                        }
-                        else
-                        {
-                            gaussCode.Add(p.gaussCross);
-                        } 
-                    }
-                    else
-                    {
-                        if (gaussCode.Contains(p.gaussCross) && !gaussCode.Contains(-p.gaussCross))
-                        {
-                            gaussCode.Add(-p.gaussCross);
-                        }
-                        else
-                        {
-                            gaussCode.Add(p.gaussCross);  
-                        }
-                    }
-
+                    gaussCode.Add(p.gaussCross);
                 }
             }
             foreach (int cross in gaussCode)
@@ -309,6 +208,9 @@ namespace KnotThatFast.CustomControllers
         {
             if (Closable)
             {
+                Line line = new Line(points.Last(), points.First());
+                lines.Add(line);
+
                 points.ForEach(p => canvas_pic.Controls.Remove(p));
                 g.Clear(Color.White);
                 points.Add(points[0]);
@@ -330,7 +232,8 @@ namespace KnotThatFast.CustomControllers
             KnotIsClosed = false;
             canvas_pic.Image = drawArea;
             gaussCode_txt.Text = "";
-            OrderedIntersectionPoints.Clear();
+            lines.Clear();
+            indexCross = 1;
         }
 
         public Image GetImage()
@@ -355,6 +258,84 @@ namespace KnotThatFast.CustomControllers
                 return Math.Sqrt(Math.Pow((p.X - Point.X), 2) + Math.Pow((p.Y - Point.Y), 2));
             }
 
+        }
+
+        private class Line
+        {
+            public MovablePoint Start, Finish;
+            public List<IntersectionPoint> Intersections;
+
+            public Line(MovablePoint start, MovablePoint finish)
+            {
+                Start = start;
+                Finish = finish;
+                Intersections = new List<IntersectionPoint>();
+            }
+
+            public Point? Intersect(Line l)
+            {
+                if (this == l)
+                    return null;
+
+                if (this.Start == l.Start || this.Start == l.Finish)
+                    return null;
+
+                Point p0 = this.Start.Position;
+                Point p1 = this.Finish.Position;
+                Point p2 = l.Start.Position;
+                Point p3 = l.Finish.Position;
+
+                Point s1 = new Point(p1.X - p0.X, p1.Y - p0.Y);
+                Point s2 = new Point(p3.X - p2.X, p3.Y - p2.Y);
+
+                float denom = -s2.X * s1.Y + s1.X * s2.Y;
+                float s = (-s1.Y * (p0.X - p2.X) + s1.X * (p0.Y - p2.Y)) / denom;
+                float t = (s2.X * (p0.Y - p2.Y) - s2.Y * (p0.X - p2.X)) / denom;
+
+                if (s >= 0 && s <= 1 && t >= 0 && t <= 1)
+                {
+                    return new Point(p0.X + (int)(t * s1.X), p0.Y + (int)(t * s1.Y));
+                }
+
+                return null;
+            }
+
+            public void OrderPoints()
+            {
+                Intersections = Intersections.OrderBy(p => p.Distance(Start.Position)).ToList();
+            }
+
+            public override bool Equals(object obj)
+            {
+                if(obj is Line)
+                {
+                    Line other = (Line)obj;
+
+                    bool same = this.Start == other.Start && this.Finish == other.Finish;
+                    bool inverse = this.Start == other.Finish && this.Finish == other.Start;
+                    return same || inverse;
+                }
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                var hashCode = -71426702;
+                hashCode = hashCode * -1521134295 + EqualityComparer<MovablePoint>.Default.GetHashCode(Start);
+                hashCode = hashCode * -1521134295 + EqualityComparer<MovablePoint>.Default.GetHashCode(Finish);
+                hashCode = hashCode * -1521134295 + EqualityComparer<List<IntersectionPoint>>.Default.GetHashCode(Intersections);
+                return hashCode;
+            }
+
+            public static bool operator ==(Line line1, Line line2)
+            {
+                return EqualityComparer<Line>.Default.Equals(line1, line2);
+            }
+
+            public static bool operator !=(Line line1, Line line2)
+            {
+                return !(line1 == line2);
+            }
         }
 
     }
