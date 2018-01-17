@@ -14,7 +14,7 @@ namespace KnotThatFast.CustomControllers
 {
     public partial class KnotCanvas : UserControl
     {
-        private Graphics g = null;
+        static private Graphics g = null;
         private Bitmap drawArea = null;
         private List<MovablePoint> points = new List<MovablePoint>();
         public bool KnotIsClosed = false;
@@ -22,7 +22,8 @@ namespace KnotThatFast.CustomControllers
         private Knot Knot;
         //private List<IntersectionPoint> OrderedIntersectionPoints = new List<IntersectionPoint>();
         private List<Line> lines = new List<Line>();
-        int indexCross = 1;
+        private List<IRenderable> renderingOrder = new List<IRenderable>();
+        private int indexCross = 1;
 
         public KnotCanvas()
         {
@@ -49,7 +50,7 @@ namespace KnotThatFast.CustomControllers
                 MovablePoint movPoint = new MovablePoint(newP);
                 //movPoint.MouseMove += MovPoint_MouseMove;
 
-                if(e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
+                if (e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
                 {
                     CrossingType crossType = e.Button == MouseButtons.Left ? CrossingType.Under : CrossingType.Over;
                     char charType = e.Button == MouseButtons.Left ? 'U' : 'O';
@@ -62,12 +63,16 @@ namespace KnotThatFast.CustomControllers
                         Line line = new Line(beforeLast, movPoint);
                         MovablePoint last = points.Last();
                         List<Point> interPoints = new List<Point>();
+
+                        bool doNotCross = true;
+
+                        
                         for (int i = 0; i < lines.Count; i++)
                         {
                             Point? p = line.Intersect(lines[i]);
                             if (p.HasValue)
                             {
-                                if(!lines[i].Intersections.Any(ip => ip.Distance(p.Value) <= 5))
+                                if (!lines[i].Intersections.Any(ip => ip.Distance(p.Value) <= 5))
                                 {
                                     interPoints.Add(p.Value);
 
@@ -79,9 +84,26 @@ namespace KnotThatFast.CustomControllers
                                     line.Intersections.Add(p1);
                                     lines[i].Intersections.Add(p2);
                                     lines[i].OrderPoints();
+                                    doNotCross = false;
+                                    
+                                    int indexOfLine = renderingOrder.IndexOf(lines[i]);
+                                    if(p1.CrossingType == CrossingType.Over)
+                                    {
+                                        renderingOrder.Insert(indexOfLine + 1, p1);
+                                        renderingOrder.Add(line);
+                                    }
+                                    else
+                                    {
+                                        renderingOrder.Insert(indexOfLine, p1);
+                                        renderingOrder.Insert(indexOfLine, line);
+                                    }
+
                                 }
                             }
                         }
+
+                        if (doNotCross)
+                            renderingOrder.Add(line);
 
                         line.OrderPoints();
                         lines.Add(line);
@@ -91,24 +113,13 @@ namespace KnotThatFast.CustomControllers
                     }
                 }
 
-                if (points.Count >= 2)
-                {
-                    g.Clear(Color.White);
-                    g.DrawLines(new Pen(Color.Blue), points.Select(p => p.Position).ToArray());
-                }
-
-                canvas_pic.Image = drawArea;
+                this.Invalidate();
             }
         }
 
         private void MovPoint_MouseMove(object sender, MouseEventArgs e)
         {
-            if (points.Count >= 2)
-            {
-                g.Clear(Color.White);
-                g.DrawLines(new Pen(Color.Blue), points.Select(p => p.Position).ToArray());
-                canvas_pic.Image = drawArea;
-            }
+            this.Invalidate();
         }
 
         public Knot GetKnot()
@@ -142,7 +153,7 @@ namespace KnotThatFast.CustomControllers
 
             foreach (Line l in lines)
             {
-                foreach(IntersectionPoint p in l.Intersections)
+                foreach (IntersectionPoint p in l.Intersections)
                 {
                     gaussCode.Add(p.gaussCross);
                 }
@@ -161,13 +172,10 @@ namespace KnotThatFast.CustomControllers
             {
                 Line line = new Line(points.Last(), points.First());
                 lines.Add(line);
+                renderingOrder.Add(line);
 
                 points.ForEach(p => canvas_pic.Controls.Remove(p));
-                g.Clear(Color.White);
-                points.Add(points[0]);
-                g.DrawLines(new Pen(Color.Blue), points.Select(p => p.Position).ToArray());
-
-                canvas_pic.Image = drawArea;
+                this.Invalidate();
 
                 CalculateGaussCode();
 
@@ -185,6 +193,7 @@ namespace KnotThatFast.CustomControllers
             gaussCode_txt.Text = "";
             lines.Clear();
             indexCross = 1;
+            renderingOrder.Clear();
         }
 
         public Image GetImage()
@@ -198,7 +207,12 @@ namespace KnotThatFast.CustomControllers
             Over
         }
 
-        private class IntersectionPoint
+        private interface IRenderable
+        {
+            void Render();
+        }
+
+        private class IntersectionPoint : IRenderable
         {
             public Point Point;
             public CrossingType CrossingType;
@@ -215,9 +229,13 @@ namespace KnotThatFast.CustomControllers
                 return Math.Sqrt(Math.Pow((p.X - Point.X), 2) + Math.Pow((p.Y - Point.Y), 2));
             }
 
+            public void Render()
+            {
+                g.FillEllipse(new SolidBrush(Color.White), this.Point.X-5, this.Point.Y-5, 10, 10);
+            }
         }
 
-        private class Line
+        private class Line : IRenderable
         {
             public MovablePoint Start, Finish;
             public List<IntersectionPoint> Intersections;
@@ -264,7 +282,7 @@ namespace KnotThatFast.CustomControllers
 
             public override bool Equals(object obj)
             {
-                if(obj is Line)
+                if (obj is Line)
                 {
                     Line other = (Line)obj;
 
@@ -284,6 +302,11 @@ namespace KnotThatFast.CustomControllers
                 return hashCode;
             }
 
+            public void Render()
+            {
+                g.DrawLine(new Pen(Color.Blue), Start.Position, Finish.Position);
+            }
+
             public static bool operator ==(Line line1, Line line2)
             {
                 return EqualityComparer<Line>.Default.Equals(line1, line2);
@@ -295,5 +318,18 @@ namespace KnotThatFast.CustomControllers
             }
         }
 
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            if (points.Count >= 2)
+            {
+                g.Clear(Color.White);
+                foreach (IRenderable r in renderingOrder)
+                {
+                    r.Render();
+                }
+                canvas_pic.Image = drawArea;
+            }
+            base.OnPaint(e);
+        }
     }
 }
