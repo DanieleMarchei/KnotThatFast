@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using KnotThatFast.Models;
-using KnotThatFast.Utilities;
 using System.Drawing.Drawing2D;
 
 namespace KnotThatFast.CustomControllers
@@ -112,54 +111,6 @@ namespace KnotThatFast.CustomControllers
             }
         }
 
-        private Point[] CreateOpenBezier(Point[] _points)
-        {
-            Point[] firstC, secondC;
-            OpenBezier.GetCurveControlPoints(_points, out firstC, out secondC);
-            Point[] final = new Point[_points.Count() + firstC.Count() + secondC.Count()];
-            int ind_p = 0, ind_f = 0, ind_s = 0;
-            for (int i = 0; i < final.Count(); i++)
-            {
-                switch (i % 3)
-                {
-                    case 0:
-                        final[i] = _points[ind_p++];
-                        break;
-                    case 1:
-                        final[i] = firstC[ind_f++];
-                        break;
-                    case 2:
-                        final[i] = secondC[ind_s++];
-                        break;
-                }
-            }
-            return final;
-        }
-
-        private Point[] CreateClosedBezier(Point[] _points)
-        {
-            Point[] firstC, secondC;
-            ClosedBezier.GetCurveControlPoints(_points, out firstC, out secondC);
-            Point[] final = new Point[_points.Count() + firstC.Count() + secondC.Count()];
-            int ind_p = 0, ind_f = 0, ind_s = 0;
-            for (int i = 0; i < final.Count(); i++)
-            {
-                switch (i % 3)
-                {
-                    case 0:
-                        final[i] = _points[ind_p++];
-                        break;
-                    case 1:
-                        final[i] = firstC[ind_f++];
-                        break;
-                    case 2:
-                        final[i] = secondC[ind_s++];
-                        break;
-                }
-            }
-            return final;
-        }
-
         public Knot GetKnot()
         {
             if (Knot == null)
@@ -239,6 +190,12 @@ namespace KnotThatFast.CustomControllers
         public Image GetImage()
         {
             return canvas_pic.Image;
+        }
+
+        private enum CrossingType
+        {
+            Under,
+            Over
         }
 
         private class IntersectionPoint
