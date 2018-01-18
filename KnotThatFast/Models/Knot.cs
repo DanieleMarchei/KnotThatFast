@@ -36,25 +36,7 @@ namespace KnotThatFast.Models
             if (!IsGaussCodeCorrect())
                 throw new ArgumentException("Gauss Code is not valid");
 
-            //remap gauss code to keep consistency with names
-            List<int> kGauss = new List<int>(code);
-            int indexCross = 1;
-            List<int> avoidPosition = new List<int>();
-            for (int i = 0; i < kGauss.Count; i++)
-            {
-                if (!avoidPosition.Contains(i))
-                {
-                    int index = GaussCode.IndexOf(-GaussCode[i]);
-                    int sign = GaussCode[i] < 0 ? -1 : 1;
-                    kGauss[i] = sign * indexCross;
-                    kGauss[index] = -kGauss[i];
-                    avoidPosition.Add(index);
-                    avoidPosition.Add(i);
-                    indexCross++;
-                }
-
-            }
-            GaussCode = kGauss;
+            RemapGaussCode();
         }
 
         public Knot()
@@ -76,6 +58,29 @@ namespace KnotThatFast.Models
             bool notContainsZero = !GaussCode.Contains(0);
             bool everyCrossTwice = GaussCode.TrueForAll(c1 => gaussCode.Exists(c2 => c1 == -c2));
             return notContainsZero && everyCrossTwice;
+        }
+
+        private void RemapGaussCode()
+        {
+            //remap gauss code to keep consistency with names
+            List<int> kGauss = new List<int>(GaussCode);
+            int indexCross = 1;
+            List<int> avoidPosition = new List<int>();
+            for (int i = 0; i < kGauss.Count; i++)
+            {
+                if (!avoidPosition.Contains(i))
+                {
+                    int index = GaussCode.IndexOf(-GaussCode[i]);
+                    int sign = GaussCode[i] < 0 ? -1 : 1;
+                    kGauss[i] = sign * indexCross;
+                    kGauss[index] = -kGauss[i];
+                    avoidPosition.Add(index);
+                    avoidPosition.Add(i);
+                    indexCross++;
+                }
+
+            }
+            GaussCode = kGauss;
         }
 
         private int? getPositionForMove1()
@@ -144,7 +149,7 @@ namespace KnotThatFast.Models
             List<int> crossings = Enumerable.Range(1, NumberOfCrossings).ToList();
 
             //generate all n choose k combinations of crosses (avoid negative)
-            IEnumerable<List<int>> combinations = Extensions.Math.Choose<int>(crossings, n);
+            IEnumerable<List<int>> combinations = Extensions.Tools.Choose<int>(crossings, n);
             foreach (List<int> list in combinations)
             {
                 Tangle t = new Tangle(list.ToArray());
@@ -164,6 +169,7 @@ namespace KnotThatFast.Models
 
             Dictionary<int, List<Tangle>> tangles = new Dictionary<int, List<Tangle>>();
 
+            //might be parallelized
             for (int i = 1; i < this.NumberOfCrossings; i++)
             {
                 tangles.Add(i, getTanglesWithNCrossings(i));
@@ -215,6 +221,8 @@ namespace KnotThatFast.Models
 
 
             }
+
+            kstep.RemapGaussCode();
 
             return kstep;
         }
