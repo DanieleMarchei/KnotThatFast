@@ -4,11 +4,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using KnotThatFast.Extensions;
 
 namespace KnotThatFast.Models
 {
     public class Knot
     {
+        private Dictionary<int, List<Tangle>> tangles = null;
         private List<int> gaussCode;
         public List<int> GaussCode
         {
@@ -29,9 +31,30 @@ namespace KnotThatFast.Models
 
         public Knot(List<int> code)
         {
-            GaussCode = code;
+            GaussCode = new List<int>(code);
+
             if (!IsGaussCodeCorrect())
                 throw new ArgumentException("Gauss Code is not valid");
+
+            //remap gauss code to keep consistency with names
+            List<int> kGauss = new List<int>(code);
+            int indexCross = 1;
+            List<int> avoidPosition = new List<int>();
+            for (int i = 0; i < kGauss.Count; i++)
+            {
+                if (!avoidPosition.Contains(i))
+                {
+                    int index = GaussCode.IndexOf(-GaussCode[i]);
+                    int sign = GaussCode[i] < 0 ? -1 : 1;
+                    kGauss[i] = sign * indexCross;
+                    kGauss[index] = -kGauss[i];
+                    avoidPosition.Add(index);
+                    avoidPosition.Add(i);
+                    indexCross++;
+                }
+
+            }
+            GaussCode = kGauss;
         }
 
         public Knot()
@@ -39,10 +62,7 @@ namespace KnotThatFast.Models
             GaussCode = new List<int>();
         }
 
-        public Knot(Knot knot)
-        {
-            GaussCode = new List<int>(knot.GaussCode);
-        }
+        public Knot(Knot knot) : this(knot.GaussCode) { }
 
         /*
          * 1- 0 is not allowed, because 0 = -0
@@ -82,12 +102,13 @@ namespace KnotThatFast.Models
 
             for (int i = 0; i < this.GaussCode.Count; i++)
             {
-                if(sign(this.GaussCode[i]) == sign(this.GaussCode[(i + 1) % this.GaussCode.Count])){
+                if (sign(this.GaussCode[i]) == sign(this.GaussCode[(i + 1) % this.GaussCode.Count]))
+                {
                     adj.Add(new Tuple<int, int>(i, (i + 1) % this.GaussCode.Count));
                 }
             }
 
-            bool isValidAdj(Tuple<int, int> a, Tuple<int,int> b)
+            bool isValidAdj(Tuple<int, int> a, Tuple<int, int> b)
             {
                 return
                     (this.GaussCode[a.Item1] == -this.GaussCode[b.Item1] &&
@@ -96,17 +117,60 @@ namespace KnotThatFast.Models
                     this.GaussCode[a.Item1] == -this.GaussCode[b.Item2]);
             }
 
-            for (int i = 0; i < adj.Count-1; i++)
+            for (int i = 0; i < adj.Count - 1; i++)
             {
                 for (int j = i + 1; j < adj.Count; j++)
                 {
                     if (isValidAdj(adj[i], adj[j]))
                         return new Tuple<int, int>(adj[i].Item1, adj[j].Item1);
                 }
-                
+
             }
 
             return null;
+        }
+
+        private bool IsValidTangle(Tangle t)
+        {
+            throw new NotImplementedException();
+        }
+
+        private List<Tangle> getTanglesWithNCrossings(int n)
+        {
+            if (n <= 0)
+                throw new ArgumentException("The number must be between 1 and the number of crossings.");
+            List<Tangle> tangles = new List<Tangle>();
+
+            List<int> crossings = Enumerable.Range(1, NumberOfCrossings).ToList();
+
+            //generate all n choose k combinations of crosses (avoid negative)
+            IEnumerable<List<int>> combinations = Extensions.Math.Choose<int>(crossings, n);
+            foreach (List<int> list in combinations)
+            {
+                Tangle t = new Tangle(list.ToArray());
+                if (IsValidTangle(t))
+                {
+                    tangles.Add(t);
+                }
+            }
+
+            //return all valid combinations
+            return tangles;
+        }
+
+        public Dictionary<int, List<Tangle>> Tangles()
+        {
+            if (this.tangles != null) return this.tangles;
+
+            Dictionary<int, List<Tangle>> tangles = new Dictionary<int, List<Tangle>>();
+
+            for (int i = 1; i < this.NumberOfCrossings; i++)
+            {
+                tangles.Add(i, getTanglesWithNCrossings(i));
+            }
+
+            this.tangles = tangles;
+            return tangles;
         }
 
         static public Knot Step(Knot knot)
@@ -120,19 +184,17 @@ namespace KnotThatFast.Models
              * - if 1 move is possible, do it
              * - if >1 moves must be taken, TO DO 
              */
-            
+
             Tuple<int, int> m2 = kstep.getPositionsForMove2();
-            if(m2 != null)
+            if (m2 != null)
             {
                 List<int> _gauss = new List<int>();
                 _gauss.Add(kstep.GaussCode[m2.Item1]);
-                _gauss.Add(kstep.GaussCode[(m2.Item1+1) % kstep.GaussCode.Count]);
+                _gauss.Add(kstep.GaussCode[(m2.Item1 + 1) % kstep.GaussCode.Count]);
                 _gauss.Add(kstep.GaussCode[m2.Item2]);
                 _gauss.Add(kstep.GaussCode[(m2.Item2 + 1) % kstep.GaussCode.Count]);
 
                 kstep.GaussCode = kstep.GaussCode.Except(_gauss).ToList();
-
-                Debug.Print("m2");
             }
             else
             {
@@ -144,7 +206,6 @@ namespace KnotThatFast.Models
                     _gauss.Add(kstep.GaussCode[(m1.Value + 1) % kstep.GaussCode.Count]);
 
                     kstep.GaussCode = kstep.GaussCode.Except(_gauss).ToList();
-                    Debug.Print("m1");
                 }
                 else
                 {
@@ -152,7 +213,7 @@ namespace KnotThatFast.Models
                     throw new ArgumentException("No step available");
                 }
 
-                
+
             }
 
             return kstep;
@@ -184,14 +245,14 @@ namespace KnotThatFast.Models
 
         public override bool Equals(object obj)
         {
-            if(obj is Knot)
+            if (obj is Knot)
             {
                 Knot other = (Knot)obj;
 
-                if(other.GaussCode.Count == this.GaussCode.Count)
+                if (other.GaussCode.Count == this.GaussCode.Count)
                 {
                     //if the two code contains the same numbers
-                    if(this.GaussCode.Except(other.GaussCode).Count() == 0)
+                    if (this.GaussCode.Except(other.GaussCode).Count() == 0)
                     {
                         //pick the location in with this[0] == other and check if the order is maintained
                         int start = other.GaussCode.IndexOf(this.GaussCode[0]);

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace KnotTest
 {
     [TestClass]
-    public class UnitTest
+    public class TestKnot
     {
         [TestMethod]
         public void TestIsGaussCodeCorrectOK()
@@ -52,6 +52,15 @@ namespace KnotTest
             Knot solved = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3 });
             knot = Knot.Solve(knot);
             Assert.AreEqual(solved, knot);
+        }
+
+        [TestMethod]
+        public void TestSolveHardUnknot()
+        {
+            Knot knot = new Knot(new List<int>() { 4, -1, 2, 5, 8, -9, 10, -7, 6, -3, 1, -2, 3, -4, -5, -6, 7, -8, 9, -10});
+            Knot unknot = new Knot();
+            knot = Knot.Solve(knot);
+            Assert.AreEqual(knot, unknot);
         }
 
         [TestMethod]

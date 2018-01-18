@@ -57,6 +57,7 @@
     <Compile Include="CustomControllers\MovablePoint.Designer.cs">
       <DependentUpon>MovablePoint.cs</DependentUpon>
     </Compile>
+    <Compile Include="Extensions\Math.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -70,6 +71,7 @@
       <DependentUpon>HelpForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\Knot.cs" />
+    <Compile Include="Models\Tangle.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="CustomControllers\KnotCanvas.resx">

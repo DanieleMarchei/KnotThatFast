@@ -53,7 +53,7 @@ namespace KnotThatFast.CustomControllers
                 if (e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
                 {
                     CrossingType crossType = e.Button == MouseButtons.Left ? CrossingType.Under : CrossingType.Over;
-                    char charType = e.Button == MouseButtons.Left ? 'U' : 'O';
+                    //char charType = e.Button == MouseButtons.Left ? 'U' : 'O';
                     points.Add(movPoint);
                     canvas_pic.Controls.Add(movPoint);
 
@@ -108,8 +108,8 @@ namespace KnotThatFast.CustomControllers
                         line.OrderPoints();
                         lines.Add(line);
 
-                        if (interPoints.Count > 0)
-                            gaussCode_txt.Text += new string(charType, interPoints.Count);
+                        //if (interPoints.Count > 0)
+                        //    gaussCode_txt.Text += new string(charType, interPoints.Count);
                     }
                 }
 
@@ -141,7 +141,12 @@ namespace KnotThatFast.CustomControllers
         public void Solve()
         {
             if (Knot != null)
+            {
                 Knot = Knot.Solve(Knot);
+                MessageBox.Show(Knot.ToString());
+            }
+               
+
         }
 
         private void CalculateGaussCode()
@@ -231,7 +236,7 @@ namespace KnotThatFast.CustomControllers
 
             public void Render()
             {
-                g.FillEllipse(new SolidBrush(Color.White), this.Point.X-5, this.Point.Y-5, 10, 10);
+                g.FillEllipse(new SolidBrush(Color.White), this.Point.X-6, this.Point.Y-6, 12, 12);
             }
         }
 
