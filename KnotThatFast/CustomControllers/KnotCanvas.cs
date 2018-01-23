@@ -38,9 +38,7 @@ namespace KnotThatFast.CustomControllers
 
             //TEST
             //Knot knot = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3, 4, -4 });
-            //Tangle tangle = new Tangle(new int[] { 3, 4 });
-
-            //bool isValid = knot.IsValidTangle(tangle);
+            //Dictionary<int, List<Tangle>> tangles = knot.Tangles();
         }
 
         private void canvas_pic_MouseClick(object sender, MouseEventArgs e)

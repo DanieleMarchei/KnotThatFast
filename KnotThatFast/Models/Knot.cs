@@ -46,15 +46,16 @@ namespace KnotThatFast.Models
 
         public Knot(Knot knot) : this(knot.GaussCode) { }
 
-        /*
+        private bool IsGaussCodeCorrect()
+        {
+            /*
          * 1- 0 is not allowed, because 0 = -0
          * 2- Every cross has to appear twice, positive and negative
          * 3- There is no knot with 2 crossings TODO
          *      -1,2,1,-2 NO
          *      1,-1,-2,2 OK
          */
-        private bool IsGaussCodeCorrect()
-        {
+
             bool notContainsZero = !GaussCode.Contains(0);
             bool everyCrossTwice = GaussCode.TrueForAll(c1 => gaussCode.Exists(c2 => c1 == -c2));
             return notContainsZero && everyCrossTwice;
@@ -137,7 +138,6 @@ namespace KnotThatFast.Models
 
         private bool IsValidTangle(Tangle t)
         {
-            //throw new NotImplementedException();
             int t_hash = t.Hash();
             List<int> firstSet = new List<int>();
             int indexFirst = this.GaussCode.IndexOf(t.Crosses[0]);
@@ -146,12 +146,12 @@ namespace KnotThatFast.Models
             bool expandDx = true;
             int expand = 1;
             int index = 0;
-            while(expandSx || expandDx)
+            while (expandSx || expandDx)
             {
                 if (expandSx)
                 {
                     index = Tools.Mod((indexFirst - expand), this.GaussCode.Count);
-                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])))
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !firstSet.Contains(Math.Abs(this.GaussCode[index])))
                     {
                         firstSet.Add(this.GaussCode[index]);
                     }
@@ -163,7 +163,7 @@ namespace KnotThatFast.Models
                 if (expandDx)
                 {
                     index = Tools.Mod((indexFirst + expand), this.GaussCode.Count);
-                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])))
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !firstSet.Contains(Math.Abs(this.GaussCode[index])))
                     {
                         firstSet.Add(this.GaussCode[index]);
                     }
@@ -188,9 +188,16 @@ namespace KnotThatFast.Models
 
                 Tangle secondT = new Tangle(secondSet);
                 int secondT_hash = secondT.Hash();
-                if(firstT != secondT && firstT_hash == secondT_hash)
+                if (firstT != secondT && firstT_hash == secondT_hash)
                 {
-                    return true;
+                    bool contain = true;
+                    foreach (int n in secondSet)
+                    {
+                        contain &= t.Crosses.Contains(Math.Abs(n));
+                    }
+
+                    if(contain)
+                        return true;
                 }
             }
 
@@ -228,7 +235,7 @@ namespace KnotThatFast.Models
             Dictionary<int, List<Tangle>> tangles = new Dictionary<int, List<Tangle>>();
 
             //might be parallelized
-            for (int i = 1; i < this.NumberOfCrossings; i++)
+            for (int i = 1; i <= this.NumberOfCrossings; i++)
             {
                 tangles.Add(i, getTanglesWithNCrossings(i));
             }

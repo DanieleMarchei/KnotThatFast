@@ -104,6 +104,26 @@ namespace KnotTest
         }
 
         [TestMethod]
+        public void TestIsValidTangleFalse3()
+        {
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3, 4, -4 });
+            Tangle tangle = new Tangle(new int[] { 1, 3 });
+            PrivateObject obj = new PrivateObject(knot);
+            bool isValid = (bool)obj.Invoke("IsValidTangle", tangle);
+            Assert.AreEqual(false, isValid);
+        }
+
+        [TestMethod]
+        public void TestIsValidTangleFalse4()
+        {
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3, 4, -4 });
+            Tangle tangle = new Tangle(new int[] { 3, 1 });
+            PrivateObject obj = new PrivateObject(knot);
+            bool isValid = (bool)obj.Invoke("IsValidTangle", tangle);
+            Assert.AreEqual(false, isValid);
+        }
+
+        [TestMethod]
         public void TestEqualKnotsOK()
         {
             Knot k1 = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3 });
