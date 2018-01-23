@@ -88,7 +88,7 @@ namespace KnotThatFast.Models
         {
             for (int i = 0; i < this.GaussCode.Count; i++)
             {
-                if (this.GaussCode[i] == -this.GaussCode[(i + 1) % this.GaussCode.Count])
+                if (this.GaussCode[i] == -this.GaussCode[Tools.Mod((i + 1), this.GaussCode.Count)])
                     return i;
             }
 
@@ -108,9 +108,9 @@ namespace KnotThatFast.Models
 
             for (int i = 0; i < this.GaussCode.Count; i++)
             {
-                if (sign(this.GaussCode[i]) == sign(this.GaussCode[(i + 1) % this.GaussCode.Count]))
+                if (sign(this.GaussCode[i]) == sign(this.GaussCode[Tools.Mod((i + 1), this.GaussCode.Count)]))
                 {
-                    adj.Add(new Tuple<int, int>(i, (i + 1) % this.GaussCode.Count));
+                    adj.Add(new Tuple<int, int>(i, Tools.Mod((i + 1), this.GaussCode.Count)));
                 }
             }
 
@@ -261,9 +261,9 @@ namespace KnotThatFast.Models
             {
                 List<int> _gauss = new List<int>();
                 _gauss.Add(kstep.GaussCode[m2.Item1]);
-                _gauss.Add(kstep.GaussCode[(m2.Item1 + 1) % kstep.GaussCode.Count]);
+                _gauss.Add(kstep.GaussCode[Tools.Mod((m2.Item1 + 1), kstep.GaussCode.Count)]);
                 _gauss.Add(kstep.GaussCode[m2.Item2]);
-                _gauss.Add(kstep.GaussCode[(m2.Item2 + 1) % kstep.GaussCode.Count]);
+                _gauss.Add(kstep.GaussCode[Tools.Mod((m2.Item2 + 1), kstep.GaussCode.Count)]);
 
                 kstep.GaussCode = kstep.GaussCode.Except(_gauss).ToList();
             }
@@ -274,7 +274,7 @@ namespace KnotThatFast.Models
                 {
                     List<int> _gauss = new List<int>();
                     _gauss.Add(kstep.GaussCode[m1.Value]);
-                    _gauss.Add(kstep.GaussCode[(m1.Value + 1) % kstep.GaussCode.Count]);
+                    _gauss.Add(kstep.GaussCode[Tools.Mod((m1.Value + 1), kstep.GaussCode.Count)]);
 
                     kstep.GaussCode = kstep.GaussCode.Except(_gauss).ToList();
                 }
@@ -332,7 +332,7 @@ namespace KnotThatFast.Models
                         for (int i = 0; i < this.GaussCode.Count; i++)
                         {
                             if (this.GaussCode[i] == other.GaussCode[start])
-                                start = (start + 1) % this.GaussCode.Count;
+                                start = Tools.Mod((start + 1), this.GaussCode.Count);
                             else
                                 return false;
                         }
