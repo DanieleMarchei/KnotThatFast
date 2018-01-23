@@ -37,19 +37,10 @@ namespace KnotThatFast.Extensions
             }
         }
 
-        public static int HashPermutation(List<int> numbers)
+        public static int Mod(int a, int n)
         {
-            for (int i = 0; i < numbers.Count; i++)
-            {
-                numbers[i] = Math.Abs(numbers[i]);
-            }
-            numbers.Sort();
-            for (int i = numbers.Count - 1; i >= 0; i--)
-            {
-                numbers[i] = numbers[i] * (int)Math.Pow(10, i);
-            }
-
-            return numbers.Sum();
+            return (a % n + n) % n;
         }
+
     }
 }

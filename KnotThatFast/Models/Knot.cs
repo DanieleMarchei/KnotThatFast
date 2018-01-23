@@ -137,7 +137,65 @@ namespace KnotThatFast.Models
 
         private bool IsValidTangle(Tangle t)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            int t_hash = t.Hash();
+            List<int> firstSet = new List<int>();
+            int indexFirst = this.GaussCode.IndexOf(t.Crosses[0]);
+            firstSet.Add(this.GaussCode[indexFirst]);
+            bool expandSx = true;
+            bool expandDx = true;
+            int expand = 1;
+            int index = 0;
+            while(expandSx || expandDx)
+            {
+                if (expandSx)
+                {
+                    index = Tools.Mod((indexFirst - expand), this.GaussCode.Count);
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])))
+                    {
+                        firstSet.Add(this.GaussCode[index]);
+                    }
+                    else
+                    {
+                        expandSx = false;
+                    }
+                }
+                if (expandDx)
+                {
+                    index = Tools.Mod((indexFirst + expand), this.GaussCode.Count);
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])))
+                    {
+                        firstSet.Add(this.GaussCode[index]);
+                    }
+                    else
+                    {
+                        expandDx = false;
+                    }
+                }
+                expand++;
+            }
+
+            Tangle firstT = new Tangle(firstSet.ToArray());
+            int firstT_hash = firstT.Hash();
+            int sizeSecondSet = t.nCrosses * 2 - firstSet.Count;
+            int[] secondSet = new int[sizeSecondSet];
+            for (int i = 0; i < this.GaussCode.Count; i++)
+            {
+                for (int j = 0; j < sizeSecondSet; j++)
+                {
+                    secondSet[j] = this.GaussCode[Tools.Mod(i + j, this.GaussCode.Count)];
+                }
+
+                Tangle secondT = new Tangle(secondSet);
+                int secondT_hash = secondT.Hash();
+                if(firstT != secondT && firstT_hash == secondT_hash)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+
         }
 
         private List<Tangle> getTanglesWithNCrossings(int n)

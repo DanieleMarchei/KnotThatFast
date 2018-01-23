@@ -20,5 +20,58 @@ namespace KnotThatFast.Models
         {
             Crosses = crosses;
         }
+
+        public int Hash()
+        {
+            List<int> numbers = Crosses.ToList();
+
+            numbers = numbers.Where(n => !numbers.Contains(-n)).ToList();
+
+            for (int i = 0; i < numbers.Count; i++)
+            {
+                numbers[i] = Math.Abs(numbers[i]);
+            }
+
+            numbers.Sort();
+            for (int i = numbers.Count - 1; i >= 0; i--)
+            {
+                numbers[i] = numbers[i] * (int)Math.Pow(10, i);
+            }
+
+            return numbers.Sum();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(obj is Tangle)
+            {
+                Tangle other = (Tangle)obj;
+                if(this.nCrosses == other.nCrosses)
+                {
+                    bool equals = true;
+                    for (int i = 0; i < this.nCrosses; i++)
+                    {
+                        equals &= this.Crosses[i] == other.Crosses[i];
+                    }
+                    return equals; 
+                }
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return this.Hash();
+        }
+
+        public static bool operator ==(Tangle tangle1, Tangle tangle2)
+        {
+            return EqualityComparer<Tangle>.Default.Equals(tangle1, tangle2);
+        }
+
+        public static bool operator !=(Tangle tangle1, Tangle tangle2)
+        {
+            return !(tangle1 == tangle2);
+        }
     }
 }

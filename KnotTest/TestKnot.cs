@@ -64,11 +64,51 @@ namespace KnotTest
         }
 
         [TestMethod]
+        public void TestIsValidTangleTrue1()
+        {
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3, 4, -4 });
+            Tangle tangle = new Tangle(new int[] { 4, 3 });
+            PrivateObject obj = new PrivateObject(knot);
+            bool isValid = (bool)obj.Invoke("IsValidTangle", tangle);
+            Assert.AreEqual(true, isValid);
+        }
+
+        [TestMethod]
+        public void TestIsValidTangleTrue2()
+        {
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3, 4, -4 });
+            Tangle tangle = new Tangle(new int[] { 3, 4 });
+            PrivateObject obj = new PrivateObject(knot);
+            bool isValid = (bool)obj.Invoke("IsValidTangle", tangle);
+            Assert.AreEqual(true, isValid);
+        }
+
+        [TestMethod]
+        public void TestIsValidTangleFalse1()
+        {
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3, 4, -4 });
+            Tangle tangle = new Tangle(new int[] { 4, 2 });
+            PrivateObject obj = new PrivateObject(knot);
+            bool isValid = (bool)obj.Invoke("IsValidTangle", tangle);
+            Assert.AreEqual(false, isValid);
+        }
+
+        [TestMethod]
+        public void TestIsValidTangleFalse2()
+        {
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3, 4, -4 });
+            Tangle tangle = new Tangle(new int[] { 2, 4 });
+            PrivateObject obj = new PrivateObject(knot);
+            bool isValid = (bool)obj.Invoke("IsValidTangle", tangle);
+            Assert.AreEqual(false, isValid);
+        }
+
+        [TestMethod]
         public void TestEqualKnotsOK()
         {
             Knot k1 = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3 });
             Knot k2 = new Knot(new List<int>() { -3, 1, -2, 3, -1, 2 });
-            Assert.AreEqual(k1, k2);
+            Assert.AreEqual(true, k1 == k2);
         }
 
         [TestMethod]
@@ -76,7 +116,7 @@ namespace KnotTest
         {
             Knot k1 = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3 });
             Knot k2 = new Knot(new List<int>() { -2, 1, -3, 3, -1, 2 });
-            Assert.AreNotEqual(k1, k2);
+            Assert.AreNotEqual(true, k1 == k2);
         }
 
         [TestMethod]
@@ -86,7 +126,7 @@ namespace KnotTest
             PrivateObject obj = new PrivateObject(knot);
             int? test = (int?)obj.Invoke("getPositionForMove1");
             if (test.HasValue)
-                Assert.AreEqual(test, 3);
+                Assert.AreEqual(3, test);
             else
                 Assert.Fail();
         }
@@ -99,8 +139,8 @@ namespace KnotTest
             Tuple<int, int> test = (Tuple<int, int>)obj.Invoke("getPositionsForMove2");
             if (test != null)
             {
-                Assert.AreEqual(test.Item1, 3);
-                Assert.AreEqual(test.Item2, 7);
+                Assert.AreEqual(3, test.Item1);
+                Assert.AreEqual(7, test.Item2);
             }
             else
                 Assert.Fail();

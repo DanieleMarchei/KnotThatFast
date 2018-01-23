@@ -51,6 +51,7 @@
     <Compile Include="TestKnot.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestTools.cs" />
+    <Compile Include="TestTangle.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
