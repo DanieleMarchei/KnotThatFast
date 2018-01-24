@@ -35,7 +35,7 @@ namespace KnotThatFast.Models
             numbers.Sort();
             for (int i = numbers.Count - 1; i >= 0; i--)
             {
-                numbers[i] = numbers[i] * (int)Math.Pow(10, i);
+                numbers[i] = numbers[i] * (int)Math.Pow(2, i);
             }
 
             return numbers.Sum();

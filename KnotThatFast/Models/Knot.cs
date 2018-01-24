@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace KnotThatFast.Models
 {
     public class Knot
     {
-        private Dictionary<int, List<Tangle>> tangles = null;
+        private List<Tangle> tangles = null;
         private List<int> gaussCode;
         public List<int> GaussCode
         {
@@ -84,7 +85,7 @@ namespace KnotThatFast.Models
             GaussCode = kGauss;
         }
 
-        private int? getPositionForMove1()
+        private int? getPositionForReductionMove1()
         {
             for (int i = 0; i < this.GaussCode.Count; i++)
             {
@@ -95,7 +96,16 @@ namespace KnotThatFast.Models
             return null;
         }
 
-        private Tuple<int, int> getPositionsForMove2()
+        private void PerformReductionMove1(int m1)
+        {
+            List<int> _gauss = new List<int>();
+            _gauss.Add(this.GaussCode[m1]);
+            _gauss.Add(this.GaussCode[Tools.Mod((m1 + 1), this.GaussCode.Count)]);
+
+            this.GaussCode = this.GaussCode.Except(_gauss).ToList();
+        }
+
+        private Tuple<int, int> getPositionsForReductionMove2()
         {
             int sign(int a)
             {
@@ -134,6 +144,41 @@ namespace KnotThatFast.Models
             }
 
             return null;
+        }
+
+        private void PerformReductionMove2(Tuple<int, int> m2)
+        {
+            List<int> _gauss = new List<int>();
+            _gauss.Add(this.GaussCode[m2.Item1]);
+            _gauss.Add(this.GaussCode[Tools.Mod((m2.Item1 + 1), this.GaussCode.Count)]);
+            _gauss.Add(this.GaussCode[m2.Item2]);
+            _gauss.Add(this.GaussCode[Tools.Mod((m2.Item2 + 1), this.GaussCode.Count)]);
+
+            this.GaussCode = this.GaussCode.Except(_gauss).ToList();
+        }
+
+        private Tuple<int, Tangle> getTangleForTranslationMove1()
+        {
+            return null;
+        }
+
+        private Tangle getTangleForTranslationMove2()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void PerformTranslationMove1(int cross, Tangle t)
+        {
+
+            int indexPositive = this.GaussCode.IndexOf(cross);
+            int indexNegative = this.GaussCode.IndexOf(-cross);
+
+
+        }
+
+        private void PerformTranslationMove2(Tangle t)
+        {
+            throw new NotImplementedException();
         }
 
         private bool IsValidTangle(Tangle t)
@@ -196,7 +241,7 @@ namespace KnotThatFast.Models
                         contain &= t.Crosses.Contains(Math.Abs(n));
                     }
 
-                    if(contain)
+                    if (contain)
                         return true;
                 }
             }
@@ -228,19 +273,37 @@ namespace KnotThatFast.Models
             return tangles;
         }
 
-        public Dictionary<int, List<Tangle>> Tangles()
+        public List<Tangle> Tangles()
         {
             if (this.tangles != null) return this.tangles;
 
-            Dictionary<int, List<Tangle>> tangles = new Dictionary<int, List<Tangle>>();
+            List<Tangle> tangles = new List<Tangle>();
 
-            //might be parallelized
-            for (int i = 1; i <= this.NumberOfCrossings; i++)
+            #region PARALLEL
+            //int processors = Environment.ProcessorCount * 2;
+            //ConcurrentDictionary<int, List<Tangle>> concurrentTangles = new ConcurrentDictionary<int, List<Tangle>>(processors, NumberOfCrossings);
+
+            //Task getTanglesTask = Task.Run(
+            //    () =>
+            //    {
+            //        for (int i = 1; i <= this.NumberOfCrossings; i++)
+            //        {
+            //            concurrentTangles[i] = getTanglesWithNCrossings(i);
+            //        }
+            //    });
+
+            //Task.WaitAll(getTanglesTask);
+            //this.tangles = concurrentTangles.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, tangles.Comparer);
+
+            #endregion
+
+            //avoid tangles with 0 and NumberOfCrossings crossings
+            for (int i = 1; i < this.NumberOfCrossings; i++)
             {
-                tangles.Add(i, getTanglesWithNCrossings(i));
+                tangles.AddRange(getTanglesWithNCrossings(i));
             }
 
-            this.tangles = tangles;
+            //this.tangles = tangles;
             return tangles;
         }
 
@@ -252,39 +315,46 @@ namespace KnotThatFast.Models
              * Reduction Move 2 (a,b \ -a,-b)
              * Reduction Move 1 (a,-a)
              * try every translation move (1 and 2)
-             * - if 1 move is possible, do it
-             * - if >1 moves must be taken, TO DO 
+             * - if 1 move leads to a reduction move, do it
+             * - if 0 moves leads to a reduction move, see how many of them are needed
              */
 
-            Tuple<int, int> m2 = kstep.getPositionsForMove2();
+            Tuple<int, int> m2 = kstep.getPositionsForReductionMove2();
             if (m2 != null)
             {
-                List<int> _gauss = new List<int>();
-                _gauss.Add(kstep.GaussCode[m2.Item1]);
-                _gauss.Add(kstep.GaussCode[Tools.Mod((m2.Item1 + 1), kstep.GaussCode.Count)]);
-                _gauss.Add(kstep.GaussCode[m2.Item2]);
-                _gauss.Add(kstep.GaussCode[Tools.Mod((m2.Item2 + 1), kstep.GaussCode.Count)]);
-
-                kstep.GaussCode = kstep.GaussCode.Except(_gauss).ToList();
+                //reduction move 2
+                kstep.PerformReductionMove2(m2);
             }
             else
             {
-                int? m1 = kstep.getPositionForMove1();
-                if (m1.HasValue)
+                //reduction move 1
+                int? m1 = kstep.getPositionForReductionMove1();
+                if (m1 != null)
                 {
-                    List<int> _gauss = new List<int>();
-                    _gauss.Add(kstep.GaussCode[m1.Value]);
-                    _gauss.Add(kstep.GaussCode[Tools.Mod((m1.Value + 1), kstep.GaussCode.Count)]);
-
-                    kstep.GaussCode = kstep.GaussCode.Except(_gauss).ToList();
+                    kstep.PerformReductionMove1(m1.Value);
                 }
                 else
                 {
-                    //translation
-                    throw new ArgumentException("No step available");
+                    Tuple<int, Tangle> tu = kstep.getTangleForTranslationMove1();
+                    if(tu != null)
+                    {
+                        kstep.PerformTranslationMove1(tu.Item1, tu.Item2);
+                    }
+                    else
+                    {
+                        Tangle t = kstep.getTangleForTranslationMove2();
+                        if (t != null)
+                        {
+                            kstep.PerformTranslationMove2(t);
+                        }
+                        else
+                        {
+                            //should check for all possible untangling paths 
+                            //until a set of translation moves leads to a reduction move
+                            throw new ArgumentException("No step available");
+                        }
+                    }
                 }
-
-
             }
 
             kstep.RemapGaussCode();

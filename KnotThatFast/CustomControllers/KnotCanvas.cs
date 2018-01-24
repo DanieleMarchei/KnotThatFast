@@ -37,8 +37,8 @@ namespace KnotThatFast.CustomControllers
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             //TEST
-            //Knot knot = new Knot(new List<int>() { 1, -2, 3, -1, 2, -3, 4, -4 });
-            //Dictionary<int, List<Tangle>> tangles = knot.Tangles();
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, 4, 5, -6, 7, -8, 9, -10, 2, -3, 10, -1, -4, -9, 8, -5, 6, -7 });
+            Dictionary<int, List<Tangle>> tangles = knot.Tangles();
         }
 
         private void canvas_pic_MouseClick(object sender, MouseEventArgs e)
@@ -66,7 +66,7 @@ namespace KnotThatFast.CustomControllers
 
                         bool doNotCross = true;
 
-                        
+
                         for (int i = 0; i < lines.Count; i++)
                         {
                             Point? p = line.Intersect(lines[i]);
@@ -85,9 +85,9 @@ namespace KnotThatFast.CustomControllers
                                     lines[i].Intersections.Add(p2);
                                     lines[i].OrderPoints();
                                     doNotCross = false;
-                                    
+
                                     int indexOfLine = renderingOrder.IndexOf(lines[i]);
-                                    if(p1.CrossingType == CrossingType.Over)
+                                    if (p1.CrossingType == CrossingType.Over)
                                     {
                                         renderingOrder.Insert(indexOfLine + 1, p1);
                                         renderingOrder.Add(line);
@@ -145,7 +145,7 @@ namespace KnotThatFast.CustomControllers
                 Knot = Knot.Solve(Knot);
                 MessageBox.Show(Knot.ToString());
             }
-               
+
 
         }
 
@@ -236,7 +236,7 @@ namespace KnotThatFast.CustomControllers
 
             public void Render()
             {
-                g.FillEllipse(new SolidBrush(Color.White), this.Point.X-6, this.Point.Y-6, 12, 12);
+                g.FillEllipse(new SolidBrush(Color.White), this.Point.X - 6, this.Point.Y - 6, 12, 12);
             }
         }
 

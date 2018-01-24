@@ -144,7 +144,7 @@ namespace KnotTest
         {
             Knot knot = new Knot(new List<int>() { -1, 2, -3, 4, -4, 5, -2, 1, -5, 3 });
             PrivateObject obj = new PrivateObject(knot);
-            int? test = (int?)obj.Invoke("getPositionForMove1");
+            int? test = (int?)obj.Invoke("getPositionForReductionMove1");
             if (test.HasValue)
                 Assert.AreEqual(3, test);
             else
@@ -156,7 +156,7 @@ namespace KnotTest
         {
             Knot knot = new Knot(new List<int>() { 1, -2, 3, 4, 5, 6, -6, -5, -4, -1, 2, -3 });
             PrivateObject obj = new PrivateObject(knot);
-            Tuple<int, int> test = (Tuple<int, int>)obj.Invoke("getPositionsForMove2");
+            Tuple<int, int> test = (Tuple<int, int>)obj.Invoke("getPositionsForReductionMove2");
             if (test != null)
             {
                 Assert.AreEqual(3, test.Item1);
