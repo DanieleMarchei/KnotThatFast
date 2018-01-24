@@ -169,10 +169,69 @@ namespace KnotThatFast.Models
 
         private void PerformTranslationMove1(int cross, Tangle t)
         {
+            List<int> fullTangle = new List<int>();
+            int indexFirst = this.GaussCode.IndexOf(t.Crosses[0]);
 
-            int indexPositive = this.GaussCode.IndexOf(cross);
-            int indexNegative = this.GaussCode.IndexOf(-cross);
+            bool expandSx = true;
+            bool expandDx = true;
+            int expand = 1;
+            int index = 0;
+            while (expandSx || expandDx)
+            {
+                if (expandSx)
+                {
+                    index = Tools.Mod((indexFirst - expand), this.GaussCode.Count);
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(Math.Abs(this.GaussCode[index])))
+                    {
+                        fullTangle.Insert(0, this.GaussCode[index]);
+                    }
+                    else
+                    {
+                        expandSx = false;
+                    }
+                }
+                if (expandDx)
+                {
+                    index = Tools.Mod((indexFirst + expand), this.GaussCode.Count);
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(Math.Abs(this.GaussCode[index])))
+                    {
+                        fullTangle.Add(this.GaussCode[index]);
+                    }
+                    else
+                    {
+                        expandDx = false;
+                    }
+                }
+                expand++;
+            }
 
+            bool isTangleContiguous = fullTangle.Count == (t.nCrosses * 2);
+
+            if (isTangleContiguous)
+            {
+                List<int> newGaussCode = new List<int>(this.GaussCode);
+                newGaussCode.Remove(cross);
+                newGaussCode.Remove(-cross);
+                
+                for (int i = 0; i < fullTangle.Count; i++)
+                {
+                    //negate tangle
+                    int k = newGaussCode.IndexOf(fullTangle[i]);
+                    newGaussCode[k] = -fullTangle[i];
+                }
+
+                indexFirst = newGaussCode.IndexOf(fullTangle[0]);
+                newGaussCode.Insert(Tools.Mod(indexFirst + 1,newGaussCode.Count), cross);
+                newGaussCode.Insert(Tools.Mod(indexFirst + 1, newGaussCode.Count), -cross);
+
+                this.GaussCode = newGaussCode;
+            }
+            else
+            {
+                int indexPositive = this.GaussCode.IndexOf(cross);
+                int indexNegative = this.GaussCode.IndexOf(-cross);
+
+            }
 
         }
 
