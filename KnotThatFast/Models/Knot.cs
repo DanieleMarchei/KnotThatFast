@@ -167,9 +167,10 @@ namespace KnotThatFast.Models
             throw new NotImplementedException();
         }
 
-        private void PerformTranslationMove1(int cross, Tangle t)
+        public void PerformTranslationMove1(int cross, Tangle t)
         {
             List<int> fullTangle = new List<int>();
+            fullTangle.Add(t.Crosses[0]);
             int indexFirst = this.GaussCode.IndexOf(t.Crosses[0]);
 
             bool expandSx = true;
@@ -181,7 +182,7 @@ namespace KnotThatFast.Models
                 if (expandSx)
                 {
                     index = Tools.Mod((indexFirst - expand), this.GaussCode.Count);
-                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(Math.Abs(this.GaussCode[index])))
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(this.GaussCode[index]))
                     {
                         fullTangle.Insert(0, this.GaussCode[index]);
                     }
@@ -193,7 +194,7 @@ namespace KnotThatFast.Models
                 if (expandDx)
                 {
                     index = Tools.Mod((indexFirst + expand), this.GaussCode.Count);
-                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(Math.Abs(this.GaussCode[index])))
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(this.GaussCode[index]))
                     {
                         fullTangle.Add(this.GaussCode[index]);
                     }
@@ -212,17 +213,25 @@ namespace KnotThatFast.Models
                 List<int> newGaussCode = new List<int>(this.GaussCode);
                 newGaussCode.Remove(cross);
                 newGaussCode.Remove(-cross);
-                
+
+                int k = newGaussCode.IndexOf(fullTangle[0]);
+                int s = k;
                 for (int i = 0; i < fullTangle.Count; i++)
                 {
                     //negate tangle
-                    int k = newGaussCode.IndexOf(fullTangle[i]);
                     newGaussCode[k] = -fullTangle[i];
+                    k++;
                 }
 
-                indexFirst = newGaussCode.IndexOf(fullTangle[0]);
-                newGaussCode.Insert(Tools.Mod(indexFirst + 1,newGaussCode.Count), cross);
-                newGaussCode.Insert(Tools.Mod(indexFirst + 1, newGaussCode.Count), -cross);
+                newGaussCode.Insert(Tools.Mod(s + 1, newGaussCode.Count), cross);
+                newGaussCode.Insert(Tools.Mod(s + 1, newGaussCode.Count), -cross);
+
+                for (int i = 0; i < newGaussCode.Count; i++)
+                {
+                    if (t.Crosses.Contains(Math.Abs(newGaussCode[i]))){
+                        newGaussCode[i] = -newGaussCode[i];
+                    }
+                }
 
                 this.GaussCode = newGaussCode;
             }
@@ -230,7 +239,81 @@ namespace KnotThatFast.Models
             {
                 int indexPositive = this.GaussCode.IndexOf(cross);
                 int indexNegative = this.GaussCode.IndexOf(-cross);
+                Tangle t1 = new Tangle(fullTangle.ToArray());
+                int t1_hash = t1.Hash();
+                int nMissingElements = t.nCrosses * 2 - fullTangle.Count;
+                int[] arr = new int[nMissingElements];
+                for (int i = 0; i < this.NumberOfCrossings; i++)
+                {
+                    for (int j = 0; j < nMissingElements; j++)
+                    {
+                        arr[j] = this.GaussCode[Tools.Mod(i + j, this.GaussCode.Count)];
+                    }
 
+                    Tangle secondT = new Tangle(arr);
+                    int secondT_hash = secondT.Hash();
+                    if (t1 != secondT && t1_hash == secondT_hash)
+                    {
+                        bool contain = true;
+                        foreach (int n in arr)
+                        {
+                            contain &= t.Crosses.Contains(Math.Abs(n));
+                        }
+
+                        if (contain)
+                            break;
+                    }
+
+                }
+
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    arr[i] = this.GaussCode.IndexOf(arr[i]);
+                }
+
+                for (int i = 0; i < fullTangle.Count; i++)
+                {
+                    fullTangle[i] = this.GaussCode.IndexOf(fullTangle[i]);
+                }
+
+                if(Math.Abs(this.GaussCode[arr[0]-1]) == cross)
+                {
+                    //extern
+                    List<int> tempGauss = new List<int>(this.GaussCode);
+                    int c = tempGauss[arr[0] - 1];
+                    tempGauss.Remove(c);
+                    tempGauss.Remove(-c);
+                    tempGauss.Insert(Tools.Mod(arr[arr.Length - 1], tempGauss.Count), c);
+                    tempGauss.Insert(Tools.Mod(fullTangle[0], tempGauss.Count), -c);
+
+                    for (int i = 0; i < tempGauss.Count; i++)
+                    {
+                        if (t.Crosses.Contains(Math.Abs(tempGauss[i]))){
+                            tempGauss[i] = -tempGauss[i];
+                        }
+                    }
+
+                    this.GaussCode = tempGauss;
+                }
+                else
+                {
+                    //intern
+                    List<int> tempGauss = new List<int>(this.GaussCode);
+                    int c = tempGauss[fullTangle[0] - 1];
+                    tempGauss.Remove(c);
+                    tempGauss.Remove(-c);
+                    tempGauss.Insert(Tools.Mod(arr[0], tempGauss.Count), -c);
+                    tempGauss.Insert(Tools.Mod(fullTangle.Last(), tempGauss.Count), c);
+
+                    for (int i = 0; i < tempGauss.Count; i++)
+                    {
+                        if (t.Crosses.Contains(Math.Abs(tempGauss[i]))){
+                            tempGauss[i] = -tempGauss[i];
+                        }
+                    }
+
+                    this.GaussCode = tempGauss;
+                }
             }
 
         }

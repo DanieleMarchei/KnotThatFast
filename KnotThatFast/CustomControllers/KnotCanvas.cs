@@ -37,8 +37,8 @@ namespace KnotThatFast.CustomControllers
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             //TEST
-            Knot knot = new Knot(new List<int>() { 1, -2, 3, 4, 5, -6, 7, -8, 9, -10, 2, -3, 10, -1, -4, -9, 8, -5, 6, -7 });
-            Dictionary<int, List<Tangle>> tangles = knot.Tangles();
+            //Knot knot = new Knot(new List<int>() { -1, -2, -3, 4, 5, -5, -6, 3, -4, 6, 2, 1 });
+            //knot.PerformTranslationMove1(5, new Tangle(new int[] { 3, 4, 6 }));
         }
 
         private void canvas_pic_MouseClick(object sender, MouseEventArgs e)
