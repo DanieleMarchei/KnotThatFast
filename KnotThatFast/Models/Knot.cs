@@ -12,8 +12,8 @@ namespace KnotThatFast.Models
     public class Knot
     {
         private List<Tangle> tangles = null;
-        private List<int> gaussCode;
-        public List<int> GaussCode
+        private MovableCircularList<int> gaussCode;
+        public MovableCircularList<int> GaussCode
         {
             get
             {
@@ -32,7 +32,7 @@ namespace KnotThatFast.Models
 
         public Knot(List<int> code)
         {
-            GaussCode = new List<int>(code);
+            GaussCode = new MovableCircularList<int>(code);
 
             if (!IsGaussCodeCorrect())
                 throw new ArgumentException("Gauss Code is not valid");
@@ -42,7 +42,7 @@ namespace KnotThatFast.Models
 
         public Knot()
         {
-            GaussCode = new List<int>();
+            GaussCode = new MovableCircularList<int>();
         }
 
         public Knot(Knot knot) : this(knot.GaussCode) { }
@@ -65,7 +65,7 @@ namespace KnotThatFast.Models
         private void RemapGaussCode()
         {
             //remap gauss code to keep consistency with names
-            List<int> kGauss = new List<int>(GaussCode);
+            MovableCircularList<int> kGauss = new MovableCircularList<int>(GaussCode);
             int indexCross = 1;
             List<int> avoidPosition = new List<int>();
             for (int i = 0; i < kGauss.Count; i++)
@@ -85,11 +85,13 @@ namespace KnotThatFast.Models
             GaussCode = kGauss;
         }
 
+        #region MOVES
+        #region RED_MOVE1
         private int? getPositionForReductionMove1()
         {
             for (int i = 0; i < this.GaussCode.Count; i++)
             {
-                if (this.GaussCode[i] == -this.GaussCode[Tools.Mod((i + 1), this.GaussCode.Count)])
+                if (this.GaussCode[i] == -this.GaussCode[i + 1])
                     return i;
             }
 
@@ -98,13 +100,15 @@ namespace KnotThatFast.Models
 
         private void PerformReductionMove1(int m1)
         {
-            List<int> _gauss = new List<int>();
+            MovableCircularList<int> _gauss = new MovableCircularList<int>();
             _gauss.Add(this.GaussCode[m1]);
-            _gauss.Add(this.GaussCode[Tools.Mod((m1 + 1), this.GaussCode.Count)]);
+            _gauss.Add(this.GaussCode[m1 + 1]);
 
-            this.GaussCode = this.GaussCode.Except(_gauss).ToList();
+            this.GaussCode = new MovableCircularList<int>(this.GaussCode.Except(_gauss).ToList());
         }
+        #endregion
 
+        #region RED_MOVE2
         private Tuple<int, int> getPositionsForReductionMove2()
         {
             int sign(int a)
@@ -118,7 +122,7 @@ namespace KnotThatFast.Models
 
             for (int i = 0; i < this.GaussCode.Count; i++)
             {
-                if (sign(this.GaussCode[i]) == sign(this.GaussCode[Tools.Mod((i + 1), this.GaussCode.Count)]))
+                if (sign(this.GaussCode[i]) == sign(this.GaussCode[(i + 1)]))
                 {
                     adj.Add(new Tuple<int, int>(i, Tools.Mod((i + 1), this.GaussCode.Count)));
                 }
@@ -148,181 +152,103 @@ namespace KnotThatFast.Models
 
         private void PerformReductionMove2(Tuple<int, int> m2)
         {
-            List<int> _gauss = new List<int>();
+            MovableCircularList<int> _gauss = new MovableCircularList<int>();
             _gauss.Add(this.GaussCode[m2.Item1]);
-            _gauss.Add(this.GaussCode[Tools.Mod((m2.Item1 + 1), this.GaussCode.Count)]);
+            _gauss.Add(this.GaussCode[m2.Item1 + 1]);
             _gauss.Add(this.GaussCode[m2.Item2]);
-            _gauss.Add(this.GaussCode[Tools.Mod((m2.Item2 + 1), this.GaussCode.Count)]);
+            _gauss.Add(this.GaussCode[m2.Item2 + 1]);
 
-            this.GaussCode = this.GaussCode.Except(_gauss).ToList();
+            this.GaussCode = new MovableCircularList<int>(this.GaussCode.Except(_gauss).ToList());
         }
 
-        private Tuple<int, Tangle> getTangleForTranslationMove1()
+        #endregion
+
+        #region TRA_MOVE1
+        public Tuple<int, int, int> getTangleForTranslationMove1()
         {
-            return null;
-        }
-
-        private Tangle getTangleForTranslationMove2()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void PerformTranslationMove1(int cross, Tangle t)
-        {
-            List<int> fullTangle = new List<int>();
-            fullTangle.Add(t.Crosses[0]);
-            int indexFirst = this.GaussCode.IndexOf(t.Crosses[0]);
-
-            bool expandSx = true;
-            bool expandDx = true;
-            int expand = 1;
-            int index = 0;
-            while (expandSx || expandDx)
+            List<Tangle> tangles = this.Tangles();
+            foreach (Tangle tangle in tangles)
             {
-                if (expandSx)
+                if (tangle.nCrosses == 1)
+                    continue;
+
+                int[] ends = this.GetTangleEnds(tangle);
+
+                bool isTangleContiguous = ends.Length == 2;
+
+                int a = this.GaussCode[ends.First()];
+                int b = this.GaussCode[ends.Last()];
+
+                if (isTangleContiguous)
                 {
-                    index = Tools.Mod((indexFirst - expand), this.GaussCode.Count);
-                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(this.GaussCode[index]))
+                    //guarantees a reduction move
+                    bool notContained = !tangle.Crosses.Contains(Math.Abs(a));
+                    if (a == -b && notContained)
                     {
-                        fullTangle.Insert(0, this.GaussCode[index]);
+                        //put the cross inside the tangle 
+                        //the position does not matter, but it's put at the beginning for semplicity
+                        int crossName = Math.Abs(a);
+                        int insertIndex1 = Tools.Mod(ends.First() + 1, this.GaussCode.Count);
+                        int insertIndex2 = Tools.Mod(ends.First() + 2, this.GaussCode.Count);
+                        //(c,i1,i2) -> cross, insert index 1, insert index 2
+                        return new Tuple<int, int, int>(crossName, insertIndex1, insertIndex2 ); 
                     }
-                    else
-                    {
-                        expandSx = false;
-                    }
-                }
-                if (expandDx)
-                {
-                    index = Tools.Mod((indexFirst + expand), this.GaussCode.Count);
-                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(this.GaussCode[index]))
-                    {
-                        fullTangle.Add(this.GaussCode[index]);
-                    }
-                    else
-                    {
-                        expandDx = false;
-                    }
-                }
-                expand++;
-            }
-
-            bool isTangleContiguous = fullTangle.Count == (t.nCrosses * 2);
-
-            if (isTangleContiguous)
-            {
-                List<int> newGaussCode = new List<int>(this.GaussCode);
-                newGaussCode.Remove(cross);
-                newGaussCode.Remove(-cross);
-
-                int k = newGaussCode.IndexOf(fullTangle[0]);
-                int s = k;
-                for (int i = 0; i < fullTangle.Count; i++)
-                {
-                    //negate tangle
-                    newGaussCode[k] = -fullTangle[i];
-                    k++;
-                }
-
-                newGaussCode.Insert(Tools.Mod(s + 1, newGaussCode.Count), cross);
-                newGaussCode.Insert(Tools.Mod(s + 1, newGaussCode.Count), -cross);
-
-                for (int i = 0; i < newGaussCode.Count; i++)
-                {
-                    if (t.Crosses.Contains(Math.Abs(newGaussCode[i]))){
-                        newGaussCode[i] = -newGaussCode[i];
-                    }
-                }
-
-                this.GaussCode = newGaussCode;
-            }
-            else
-            {
-                int indexPositive = this.GaussCode.IndexOf(cross);
-                int indexNegative = this.GaussCode.IndexOf(-cross);
-                Tangle t1 = new Tangle(fullTangle.ToArray());
-                int t1_hash = t1.Hash();
-                int nMissingElements = t.nCrosses * 2 - fullTangle.Count;
-                int[] arr = new int[nMissingElements];
-                for (int i = 0; i < this.NumberOfCrossings; i++)
-                {
-                    for (int j = 0; j < nMissingElements; j++)
-                    {
-                        arr[j] = this.GaussCode[Tools.Mod(i + j, this.GaussCode.Count)];
-                    }
-
-                    Tangle secondT = new Tangle(arr);
-                    int secondT_hash = secondT.Hash();
-                    if (t1 != secondT && t1_hash == secondT_hash)
-                    {
-                        bool contain = true;
-                        foreach (int n in arr)
-                        {
-                            contain &= t.Crosses.Contains(Math.Abs(n));
-                        }
-
-                        if (contain)
-                            break;
-                    }
-
-                }
-
-                for (int i = 0; i < arr.Length; i++)
-                {
-                    arr[i] = this.GaussCode.IndexOf(arr[i]);
-                }
-
-                for (int i = 0; i < fullTangle.Count; i++)
-                {
-                    fullTangle[i] = this.GaussCode.IndexOf(fullTangle[i]);
-                }
-
-                if(Math.Abs(this.GaussCode[arr[0]-1]) == cross)
-                {
-                    //extern
-                    List<int> tempGauss = new List<int>(this.GaussCode);
-                    int c = tempGauss[arr[0] - 1];
-                    tempGauss.Remove(c);
-                    tempGauss.Remove(-c);
-                    tempGauss.Insert(Tools.Mod(arr[arr.Length - 1], tempGauss.Count), c);
-                    tempGauss.Insert(Tools.Mod(fullTangle[0], tempGauss.Count), -c);
-
-                    for (int i = 0; i < tempGauss.Count; i++)
-                    {
-                        if (t.Crosses.Contains(Math.Abs(tempGauss[i]))){
-                            tempGauss[i] = -tempGauss[i];
-                        }
-                    }
-
-                    this.GaussCode = tempGauss;
                 }
                 else
                 {
-                    //intern
-                    List<int> tempGauss = new List<int>(this.GaussCode);
-                    int c = tempGauss[fullTangle[0] - 1];
-                    tempGauss.Remove(c);
-                    tempGauss.Remove(-c);
-                    tempGauss.Insert(Tools.Mod(arr[0], tempGauss.Count), -c);
-                    tempGauss.Insert(Tools.Mod(fullTangle.Last(), tempGauss.Count), c);
-
-                    for (int i = 0; i < tempGauss.Count; i++)
+                    //does not guarantees a reduction move
+                    int m = this.GaussCode[ends[1]];
+                    int n = this.GaussCode[ends[2]];
+                    bool notContainedA = !tangle.Crosses.Contains(Math.Abs(a));
+                    bool notContainedM = !tangle.Crosses.Contains(Math.Abs(m));
+                    
+                    if (a == -b && notContainedA)
                     {
-                        if (t.Crosses.Contains(Math.Abs(tempGauss[i]))){
-                            tempGauss[i] = -tempGauss[i];
-                        }
+                        //put the cross inside the two internal ends of the tangle
+                        int crossName = Math.Abs(a);
+                        int insertIndex1 = Tools.Mod(ends[1], this.GaussCode.Count);
+                        int insertIndex2 = Tools.Mod(ends[2], this.GaussCode.Count);
+                        //(c,i1,i2) -> cross, insert index 1, insert index 2
+                        return new Tuple<int, int, int>(crossName, insertIndex1, insertIndex2);
                     }
 
-                    this.GaussCode = tempGauss;
+                    if (m == -n && notContainedM)
+                    {
+                        int crossName = Math.Abs(a);
+                        int insertIndex1 = Tools.Mod(ends.First(), this.GaussCode.Count);
+                        int insertIndex2 = Tools.Mod(ends.Last(), this.GaussCode.Count);
+                        //(c,i1,i2) -> cross, insert index 1, insert index 2
+                        return new Tuple<int, int, int>(crossName, insertIndex1, insertIndex2);
+                    }
                 }
             }
+            return null;
+        }
 
+        private void PerformTranslationMove1(int cross, int insertIndex1, int insertIndex2)
+        {
+            int posIndex = this.GaussCode.IndexOf(cross);
+            int negIndex = this.GaussCode.IndexOf(-cross);
+            this.GaussCode.Move(posIndex, insertIndex1);
+            this.GaussCode.Move(negIndex, insertIndex2);
+
+        }
+        #endregion
+
+        #region TRA_MOVE2
+        private Tangle getTangleForTranslationMove2()
+        {
+            throw new NotImplementedException();
         }
 
         private void PerformTranslationMove2(Tangle t)
         {
             throw new NotImplementedException();
         }
+        #endregion
+        #endregion
 
+        #region TANGLES
         private bool IsValidTangle(Tangle t)
         {
             int t_hash = t.Hash();
@@ -392,6 +318,83 @@ namespace KnotThatFast.Models
 
         }
 
+        private bool IsContiguousTangle(Tangle t)
+        {
+            List<int> fullTangle = new List<int>();
+            fullTangle.Add(t.Crosses[0]);
+            int indexFirst = this.GaussCode.IndexOf(t.Crosses[0]);
+
+            bool expandSx = true;
+            bool expandDx = true;
+            int expand = 1;
+            int index = 0;
+            while (expandSx || expandDx)
+            {
+                if (expandSx)
+                {
+                    index = Tools.Mod((indexFirst - expand), this.GaussCode.Count);
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(this.GaussCode[index]))
+                    {
+                        fullTangle.Insert(0, this.GaussCode[index]);
+                    }
+                    else
+                    {
+                        expandSx = false;
+                    }
+                }
+                if (expandDx)
+                {
+                    index = Tools.Mod((indexFirst + expand), this.GaussCode.Count);
+                    if (t.Crosses.Contains(Math.Abs(this.GaussCode[index])) && !fullTangle.Contains(this.GaussCode[index]))
+                    {
+                        fullTangle.Add(this.GaussCode[index]);
+                    }
+                    else
+                    {
+                        expandDx = false;
+                    }
+                }
+                expand++;
+            }
+
+            return fullTangle.Count == (t.nCrosses * 2);
+        }
+
+        private int[] GetTangleEnds(Tangle t)
+        {
+            List<int> indexes = new List<int>();
+            foreach (int c in t.Crosses)
+            {
+                indexes.Add(this.GaussCode.IndexOf(c));
+                indexes.Add(this.GaussCode.IndexOf(-c));
+            }
+
+            indexes.Sort();
+
+            int a = Tools.Mod(indexes.First() - 1, this.GaussCode.Count);
+            int b = Tools.Mod(indexes.Last() + 1, this.GaussCode.Count);
+
+            if (this.IsContiguousTangle(t))
+            {
+                return new int[] { a, b };
+            }
+            else
+            {
+                int m = 0, n = 0;
+                for (int i = 0; i < indexes.Count - 1; i++)
+                {
+                    m = Tools.Mod(indexes[i] + 1, this.GaussCode.Count);
+                    n = indexes[i + 1];
+                    if (m != n)
+                    {
+                        n--;
+                        break;
+                    }
+                }
+                return new int[] { a, m, n, b };
+            }
+        }
+
         private List<Tangle> getTanglesWithNCrossings(int n)
         {
             if (n <= 0)
@@ -448,6 +451,7 @@ namespace KnotThatFast.Models
             //this.tangles = tangles;
             return tangles;
         }
+        #endregion
 
         static public Knot Step(Knot knot)
         {
@@ -477,10 +481,10 @@ namespace KnotThatFast.Models
                 }
                 else
                 {
-                    Tuple<int, Tangle> tu = kstep.getTangleForTranslationMove1();
-                    if(tu != null)
+                    Tuple<int, int, int> tu = kstep.getTangleForTranslationMove1();
+                    if (tu != null)
                     {
-                        kstep.PerformTranslationMove1(tu.Item1, tu.Item2);
+                        kstep.PerformTranslationMove1(tu.Item1, tu.Item2, tu.Item3);
                     }
                     else
                     {
@@ -528,32 +532,14 @@ namespace KnotThatFast.Models
             return solved;
         }
 
+        #region MISCELLANEOUS
         public override bool Equals(object obj)
         {
             if (obj is Knot)
             {
                 Knot other = (Knot)obj;
 
-                if (other.GaussCode.Count == this.GaussCode.Count)
-                {
-                    //if the two code contains the same numbers
-                    if (this.GaussCode.Except(other.GaussCode).Count() == 0)
-                    {
-                        //pick the location in with this[0] == other and check if the order is maintained
-                        int start = other.GaussCode.IndexOf(this.GaussCode[0]);
-                        for (int i = 0; i < this.GaussCode.Count; i++)
-                        {
-                            if (this.GaussCode[i] == other.GaussCode[start])
-                                start = Tools.Mod((start + 1), this.GaussCode.Count);
-                            else
-                                return false;
-                        }
-
-                        return true;
-                    }
-                    return false;
-                }
-                return false;
+                return this.GaussCode == other.GaussCode;
             }
             return false;
         }
@@ -587,5 +573,7 @@ namespace KnotThatFast.Models
             s = s.Substring(0, s.Length - 2);
             return s + "]";
         }
+
+        #endregion
     }
 }

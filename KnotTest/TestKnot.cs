@@ -57,7 +57,7 @@ namespace KnotTest
         [TestMethod]
         public void TestSolveHardUnknot()
         {
-            Knot knot = new Knot(new List<int>() { 4, -1, 2, 5, 8, -9, 10, -7, 6, -3, 1, -2, 3, -4, -5, -6, 7, -8, 9, -10});
+            Knot knot = new Knot(new List<int>() { 4, -1, 2, 5, 8, -9, 10, -7, 6, -3, 1, -2, 3, -4, -5, -6, 7, -8, 9, -10 });
             Knot unknot = new Knot();
             knot = Knot.Solve(knot);
             Assert.AreEqual(knot, unknot);
@@ -164,6 +164,52 @@ namespace KnotTest
             }
             else
                 Assert.Fail();
+        }
+
+        [TestMethod]
+        public void TestKnotTangleIsContiguousTrue()
+        {
+            Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 7, 8, 4, -5, 6, -7, -8 });
+            PrivateObject obj = new PrivateObject(knot);
+            Tangle t = new Tangle(new int[] { 1, 2, 3 });
+            bool test = (bool)obj.Invoke("IsContiguousTangle", t);
+            Assert.AreEqual(true, test);
+        }
+
+        [TestMethod]
+        public void TestKnotTangleIsContiguousFalse()
+        {
+            Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 7, 8, 4, -5, 6, -7, -8 });
+            PrivateObject obj = new PrivateObject(knot);
+            Tangle t = new Tangle(new int[] { 5, 6, 7 });
+            bool test = (bool)obj.Invoke("IsContiguousTangle", t);
+            Assert.AreEqual(false, test);
+        }
+
+        [TestMethod]
+        public void TestKnotEndsContiguousTangle()
+        {
+            Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 7, 8, 4, -5, 6, -7, -8 });
+            PrivateObject obj = new PrivateObject(knot);
+            Tangle t = new Tangle(new int[] { 1, 2, 3 });
+            int[] test = (int[])obj.Invoke("GetTangleEnds", t);
+            Assert.AreEqual(2, test.Length);
+            Assert.AreEqual(15, test[0]);
+            Assert.AreEqual(6, test[1]);
+        }
+
+        [TestMethod]
+        public void TestKnotEndsNotContiguousTangle()
+        {
+            Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 7, 8, 4, -5, 6, -7, -8 });
+            PrivateObject obj = new PrivateObject(knot);
+            Tangle t = new Tangle(new int[] { 5, 6, 7 });
+            int[] test = (int[])obj.Invoke("GetTangleEnds", t);
+            Assert.AreEqual(4, test.Length);
+            Assert.AreEqual(6, test[0]);
+            Assert.AreEqual(10, test[1]);
+            Assert.AreEqual(11, test[2]);
+            Assert.AreEqual(15, test[3]);
         }
     }
 }

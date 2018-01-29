@@ -38,7 +38,11 @@ namespace KnotThatFast.CustomControllers
 
             //TEST
             //Knot knot = new Knot(new List<int>() { -1, -2, -3, 4, 5, -5, -6, 3, -4, 6, 2, 1 });
-            //knot.PerformTranslationMove1(5, new Tangle(new int[] { 3, 4, 6 }));
+            //knot.getTangleForTranslationMove1();
+
+            Knot knot = new Knot(new List<int>() { -1, 2, -3, 4, -4, 5, -2, 1, -5, 3 });
+            Knot solved = new Knot(new List<int>() { -1, 2, -3, 5, -2, 1, -5, 3 });
+            knot = Knot.Solve(knot);
         }
 
         private void canvas_pic_MouseClick(object sender, MouseEventArgs e)
