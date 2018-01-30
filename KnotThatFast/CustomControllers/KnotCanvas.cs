@@ -37,11 +37,8 @@ namespace KnotThatFast.CustomControllers
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             //TEST
-            //Knot knot = new Knot(new List<int>() { -1, -2, -3, 4, 5, -5, -6, 3, -4, 6, 2, 1 });
-            //knot.getTangleForTranslationMove1();
-
-            Knot knot = new Knot(new List<int>() { -1, 2, -3, 4, -4, 5, -2, 1, -5, 3 });
-            Knot solved = new Knot(new List<int>() { -1, 2, -3, 5, -2, 1, -5, 3 });
+            //Knot knot = new Knot(new List<int>() { 4, -1, 2, 5, 8, -9, 10, -7, 6, -3, 1, -2, 3, -4, -5, -6, 7, -8, 9, -10 });
+            Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 7, 8, 4, -5, 6, -7, -8 });
             knot = Knot.Solve(knot);
         }
 

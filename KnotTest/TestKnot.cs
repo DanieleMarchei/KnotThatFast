@@ -55,12 +55,21 @@ namespace KnotTest
         }
 
         [TestMethod]
-        public void TestSolveHardUnknot()
+        public void TestSolveHardUnknot1()
         {
             Knot knot = new Knot(new List<int>() { 4, -1, 2, 5, 8, -9, 10, -7, 6, -3, 1, -2, 3, -4, -5, -6, 7, -8, 9, -10 });
             Knot unknot = new Knot();
             knot = Knot.Solve(knot);
             Assert.AreEqual(knot, unknot);
+        }
+
+        [TestMethod]
+        public void TestSolveHardKnot1()
+        {
+            Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 7, 8, 4, -5, 6, -7, -8 });
+            Knot solved = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 4, -5, 6 });
+            knot = Knot.Solve(knot);
+            Assert.AreEqual(solved, knot);
         }
 
         [TestMethod]

@@ -164,7 +164,7 @@ namespace KnotThatFast.Models
         #endregion
 
         #region TRA_MOVE1
-        public Tuple<int, int, int> getTangleForTranslationMove1()
+        public Tuple<int, int, int> getPositionsForTranslationMove1()
         {
             List<Tangle> tangles = this.Tangles();
             foreach (Tangle tangle in tangles)
@@ -236,14 +236,58 @@ namespace KnotThatFast.Models
         #endregion
 
         #region TRA_MOVE2
-        private Tangle getTangleForTranslationMove2()
+        private Tuple<int, int, int, int> getPositionsForTranslationMove2()
         {
-            throw new NotImplementedException();
+            int sign(int x) { return x < 0 ? -1 : 1; };
+
+            List<Tangle> tangles = this.Tangles();
+            foreach(Tangle tangle in tangles)
+            {
+                if (tangle.nCrosses == 1)
+                    continue;
+
+                int[] ends = this.GetTangleEnds(tangle);
+
+                //bool isTangleContiguous = ends.Length == 2;
+
+                int a = this.GaussCode[ends.First()];
+                int b = this.GaussCode[ends.Last()];
+
+                if(sign(a) == sign(b))
+                {
+                    bool existsContiguous = this.GaussCode.Exists(c1 =>
+                        c1 == a && this.GaussCode[this.GaussCode.IndexOf(c1) + 1] == b ||
+                        c1 == b && this.GaussCode[this.GaussCode.IndexOf(c1) + 1] == a);
+                    if (existsContiguous)
+                    {
+                        /*
+                         * in theory I could not do that, but it works for some reason
+                         * if the tangle is not contiguous I need to check if the other adjacent crosses are 
+                         * inside or outiside the tangle
+                         * but apparently this move always lead to a reduction move so... ok
+                         */ 
+                        //if (isTangleContiguous)
+                        //{
+                            int newIndex1 = Tools.Mod(ends.First() + 1, this.GaussCode.Count);
+                            int newIndex2 = Tools.Mod(ends.First() + 2, this.GaussCode.Count);
+                            //move index 1, move index 2, new index 1, new index 2
+                            return new Tuple<int, int, int, int>(ends.First(), ends.Last(), newIndex1, newIndex2);
+                        //}
+                        //else
+                        //{
+
+                        //}
+                    }
+                }
+            }
+
+            return null;
         }
 
-        private void PerformTranslationMove2(Tangle t)
+        private void PerformTranslationMove2(Tuple<int, int, int, int> t)
         {
-            throw new NotImplementedException();
+            this.GaussCode.Move(t.Item1, t.Item3);
+            this.GaussCode.Move(t.Item2, t.Item4);
         }
         #endregion
         #endregion
@@ -481,14 +525,14 @@ namespace KnotThatFast.Models
                 }
                 else
                 {
-                    Tuple<int, int, int> tu = kstep.getTangleForTranslationMove1();
+                    Tuple<int, int, int> tu = kstep.getPositionsForTranslationMove1();
                     if (tu != null)
                     {
                         kstep.PerformTranslationMove1(tu.Item1, tu.Item2, tu.Item3);
                     }
                     else
                     {
-                        Tangle t = kstep.getTangleForTranslationMove2();
+                        Tuple<int, int, int, int> t = kstep.getPositionsForTranslationMove2();
                         if (t != null)
                         {
                             kstep.PerformTranslationMove2(t);
