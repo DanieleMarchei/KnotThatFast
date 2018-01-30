@@ -73,5 +73,18 @@ namespace KnotThatFast.Models
         {
             return !(tangle1 == tangle2);
         }
+
+        public override string ToString()
+        {
+            string s = "{";
+            foreach (int c in this.Crosses)
+            {
+                s += c + ";";
+            }
+            s = s.Remove(s.Length-1);
+            s += "}";
+
+            return s;
+        }
     }
 }

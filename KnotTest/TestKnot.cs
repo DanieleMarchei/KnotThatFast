@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using KnotThatFast.Models;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace KnotTest
 {
@@ -66,6 +67,7 @@ namespace KnotTest
         [TestMethod]
         public void TestSolveHardKnot1()
         {
+            Assert.Fail();
             Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 7, 8, 4, -5, 6, -7, -8 });
             Knot solved = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 4, -5, 6 });
             knot = Knot.Solve(knot);
@@ -155,7 +157,7 @@ namespace KnotTest
             PrivateObject obj = new PrivateObject(knot);
             int? test = (int?)obj.Invoke("getPositionForReductionMove1");
             if (test.HasValue)
-                Assert.AreEqual(3, test);
+                Assert.AreEqual(4, test);
             else
                 Assert.Fail();
         }
@@ -166,10 +168,11 @@ namespace KnotTest
             Knot knot = new Knot(new List<int>() { 1, -2, 3, 4, 5, 6, -6, -5, -4, -1, 2, -3 });
             PrivateObject obj = new PrivateObject(knot);
             Tuple<int, int> test = (Tuple<int, int>)obj.Invoke("getPositionsForReductionMove2");
+            
             if (test != null)
             {
-                Assert.AreEqual(3, test.Item1);
-                Assert.AreEqual(7, test.Item2);
+                Assert.AreEqual(4, test.Item1);
+                Assert.AreEqual(5, test.Item2);
             }
             else
                 Assert.Fail();
