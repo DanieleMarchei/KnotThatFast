@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using KnotThatFast.Models;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace KnotTest
 {
@@ -67,7 +68,6 @@ namespace KnotTest
         [TestMethod]
         public void TestSolveHardKnot1()
         {
-            Assert.Fail();
             Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 7, 8, 4, -5, 6, -7, -8 });
             Knot solved = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 4, -5, 6 });
             knot = Knot.Solve(knot);
@@ -222,6 +222,16 @@ namespace KnotTest
             Assert.AreEqual(10, test[1]);
             Assert.AreEqual(11, test[2]);
             Assert.AreEqual(15, test[3]);
+        }
+
+        [TestMethod]
+        public void TestFactorEasy1()
+        {
+            Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 4, -5, 6, -7, 8, -9, 10, -8, 7, -10, 9 });
+            int[] expected = new int[3] { 4, 3, 3};
+            int[] factors = Knot.Factorize(knot);
+            bool isEqual = Enumerable.SequenceEqual(expected, factors);
+            Assert.AreEqual(true, isEqual);
         }
     }
 }

@@ -29,6 +29,7 @@ namespace KnotThatFast.Models
         }
         public int NumberOfCrossings { get { return GaussCode.Count / 2; } }
         public bool IsUnknot { get { return GaussCode.Count == 0; } }
+        public bool IsSolved { get; private set; }
 
         public Knot(List<int> code)
         {
@@ -38,11 +39,13 @@ namespace KnotThatFast.Models
                 throw new ArgumentException("Gauss Code is not valid");
 
             RemapGaussCode();
+            this.IsSolved = false;
         }
 
         public Knot()
         {
             GaussCode = new MovableCircularList<int>();
+            this.IsSolved = false;
         }
 
         public Knot(Knot knot) : this(knot.GaussCode) { }
@@ -129,7 +132,7 @@ namespace KnotThatFast.Models
             {
                 int a = t.Item1;
                 int b = t.Item2;
-                bool exists = this.GaussCode.Exists(c => 
+                bool exists = this.GaussCode.Exists(c =>
                     c == -a && this.GaussCode[this.GaussCode.IndexOf(c) + 1] == -b ||
                     c == -b && this.GaussCode[this.GaussCode.IndexOf(c) + 1] == -a);
                 if (exists)
@@ -169,9 +172,10 @@ namespace KnotThatFast.Models
         #endregion
 
         #region TRA_MOVE1
-        public Tuple<int, int, int, Tangle> getPositionsForTranslationMove1()
+        public Tuple<int, int, int, Tangle> getPositionsForTranslationMove1(out bool isContiguous)
         {
             List<Tangle> tangles = this.Tangles();
+            Tuple<int, int, int, Tangle> notContiguousTuple = null;
             foreach (Tangle tangle in tangles)
             {
                 if (tangle.nCrosses == 1)
@@ -180,6 +184,7 @@ namespace KnotThatFast.Models
                 int[] ends = this.GetTangleEnds(tangle);
 
                 bool isTangleContiguous = ends.Length == 2;
+
 
                 int a = this.GaussCode[ends.First()];
                 int b = this.GaussCode[ends.Last()];
@@ -196,6 +201,7 @@ namespace KnotThatFast.Models
                         int insertIndex1 = Tools.Mod(ends.First() + 1, this.GaussCode.Count);
                         int insertIndex2 = Tools.Mod(ends.First() + 2, this.GaussCode.Count);
                         //(c,i1,i2) -> cross, insert index 1, insert index 2
+                        isContiguous = isTangleContiguous;
                         return new Tuple<int, int, int, Tangle>(crossName, insertIndex1, insertIndex2, tangle);
                     }
                 }
@@ -214,7 +220,7 @@ namespace KnotThatFast.Models
                         int insertIndex1 = Tools.Mod(ends[1] - 1, this.GaussCode.Count);
                         int insertIndex2 = Tools.Mod(ends[2] + 1, this.GaussCode.Count);
                         //(c,i1,i2) -> cross, insert index 1, insert index 2
-                        return new Tuple<int, int, int, Tangle>(crossName, insertIndex1, insertIndex2, tangle);
+                        notContiguousTuple = new Tuple<int, int, int, Tangle>(crossName, insertIndex1, insertIndex2, tangle);
                     }
 
                     if (m == -n && notContainedM)
@@ -223,11 +229,12 @@ namespace KnotThatFast.Models
                         int insertIndex1 = Tools.Mod(ends.First() - 1, this.GaussCode.Count);
                         int insertIndex2 = Tools.Mod(ends.Last() + 1, this.GaussCode.Count);
                         //(c,i1,i2) -> cross, insert index 1, insert index 2
-                        return new Tuple<int, int, int, Tangle>(crossName, insertIndex1, insertIndex2, tangle);
+                        notContiguousTuple = new Tuple<int, int, int, Tangle>(crossName, insertIndex1, insertIndex2, tangle);
                     }
                 }
             }
-            return null;
+            isContiguous = false;
+            return notContiguousTuple;
         }
 
         private void PerformTranslationMove1(int cross, int insertIndex1, int insertIndex2, Tangle t)
@@ -246,11 +253,14 @@ namespace KnotThatFast.Models
         #endregion
 
         #region TRA_MOVE2
-        private Tuple<int, int, int, int> getPositionsForTranslationMove2()
+        private Tuple<int, int, int, int> getPositionsForTranslationMove2(out bool isContinguous)
         {
             int sign(int x) { return x < 0 ? -1 : 1; };
 
             List<Tangle> tangles = this.Tangles();
+
+            Tuple<int, int, int, int> notContiguousTuple = null;
+
             foreach (Tangle tangle in tangles)
             {
                 if (tangle.nCrosses == 1)
@@ -269,7 +279,7 @@ namespace KnotThatFast.Models
                     if (existsContiguous)
                     {
                         bool isTangleContiguous = ends.Length == 2;
-
+                        isContinguous = isTangleContiguous;
                         if (isTangleContiguous)
                         {
                             int newIndex1 = Tools.Mod(ends.First() + 1, this.GaussCode.Count);
@@ -284,15 +294,15 @@ namespace KnotThatFast.Models
                             bool isContiguousInternToTangle = index_a >= ends[1] && index_a <= ends[2] || index_b >= ends[1] && index_b <= ends[2];
                             if (!isContiguousInternToTangle)
                             {
-                                return new Tuple<int, int, int, int>(ends.First(), ends.Last(), index_a, index_b);
+                                notContiguousTuple = new Tuple<int, int, int, int>(ends.First(), ends.Last(), index_a, index_b);
                             }
 
                         }
                     }
                 }
             }
-
-            return null;
+            isContinguous = false;
+            return notContiguousTuple;
         }
 
         private void PerformTranslationMove2(Tuple<int, int, int, int> t)
@@ -534,14 +544,6 @@ namespace KnotThatFast.Models
         {
             Knot kstep = new Knot(knot);
 
-            /*
-             * Reduction Move 2 (a,b \ -a,-b)
-             * Reduction Move 1 (a,-a)
-             * try every translation move (1 and 2)
-             * - if 1 move leads to a reduction move, do it
-             * - if 0 moves leads to a reduction move, see how many of them are needed
-             */
-
             Tuple<int, int> m2 = kstep.getPositionsForReductionMove2();
             if (m2 != null)
             {
@@ -566,26 +568,21 @@ namespace KnotThatFast.Models
                 }
                 else
                 {
-                    Tuple<int, int, int, int> t = kstep.getPositionsForTranslationMove2();
-                    if (t != null)
+                    bool contiguoust2 = false;
+                    bool contiguoust1 = false;
+
+                    Tuple<int, int, int, int> t2 = kstep.getPositionsForTranslationMove2(out contiguoust2);
+                    Tuple<int, int, int, Tangle> t1 = kstep.getPositionsForTranslationMove1(out contiguoust1);
+
+                    if (contiguoust1)
                     {
-                        Debug.Print("Translation Move 2");
-                        Debug.Print("Moving " + kstep.GaussCode[t.Item1] + " and " + kstep.GaussCode[t.Item2]);
-                        Debug.Print("Before: " + kstep);
-                        kstep.PerformTranslationMove2(t);
-                        Debug.Print("After: " + kstep);
+                        kstep.PerformTranslationMove1(t1.Item1, t1.Item2, t1.Item3, t1.Item4);
                     }
                     else
                     {
-                        Tuple<int, int, int, Tangle> tu = kstep.getPositionsForTranslationMove1();
-                        if (tu != null)
+                        if (contiguoust2)
                         {
-                            Debug.Print("Translation Move 1");
-                            Debug.Print("Moving " + tu.Item1 + " into: " + tu.Item2 + " and " + tu.Item3);
-                            Debug.Print("Tangle: "+ tu.Item4);
-                            Debug.Print("Before: " + kstep);
-                            kstep.PerformTranslationMove1(tu.Item1, tu.Item2, tu.Item3, tu.Item4);
-                            Debug.Print("After: " + kstep);
+                            kstep.PerformTranslationMove2(t2);
                         }
                         else
                         {
@@ -596,7 +593,6 @@ namespace KnotThatFast.Models
                     }
                 }
             }
-
             kstep.RemapGaussCode();
 
             return kstep;
@@ -617,13 +613,49 @@ namespace KnotThatFast.Models
                     solved = Knot.Step(solved);
                     Debug.Print("\nstep\n");
                 }
-                catch (ArgumentException e)
+                catch (ArgumentException)
                 {
                     triedEveryOperation = true;
                 }
             }
 
+            solved.IsSolved = true;
             return solved;
+        }
+
+        static public int[] Factorize(Knot knot)
+        {
+            if (knot.IsUnknot) return new int[0];
+
+            List<int> factors = new List<int>();
+            if (!knot.IsSolved)
+                knot = Knot.Solve(knot);
+
+            List<Tangle> tangles = knot.Tangles()
+                .Where(t => knot.IsContiguousTangle(t))
+                .OrderBy(t => t.nCrosses)
+                .ToList();
+
+            bool found = false;
+            for (int i = tangles.Count - 1; i > 0; i--)
+            {
+                found = false;
+                for (int j = i - 1; j >= 0; j--)
+                {
+                    found |= tangles[i].Crosses.Intersect(tangles[j].Crosses).Count() != 0;
+                }
+
+                if (!found)
+                {
+                    factors.Add(tangles[i].nCrosses);
+                }
+            }
+
+            factors.Add(tangles.First().nCrosses);
+
+            return factors.ToArray();
+
+
         }
 
         #region MISCELLANEOUS
@@ -659,6 +691,8 @@ namespace KnotThatFast.Models
 
         public override string ToString()
         {
+            if (this.GaussCode.Count == 0)
+                return "[ ]";
             string s = "[";
             foreach (int g in GaussCode)
             {
@@ -667,7 +701,6 @@ namespace KnotThatFast.Models
             s = s.Substring(0, s.Length - 2);
             return s + "]";
         }
-
         #endregion
     }
 }
