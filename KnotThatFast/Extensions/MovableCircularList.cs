@@ -15,7 +15,10 @@ namespace KnotThatFast.Extensions
 
         new public T this[int index]
         {
-            get { return this.ElementAt(Tools.Mod(index, this.Count)); }
+            get
+            {
+                return this.ElementAt(Tools.Mod(index, this.Count));
+            }
             set
             {
                 T item = this[index];

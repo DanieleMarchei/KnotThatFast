@@ -109,7 +109,7 @@ namespace KnotThatFast.Models
         #endregion
 
         #region RED_MOVE2
-        private Tuple<int, int> getPositionsForReductionMove2()
+        private int[] getPositionsForReductionMove2()
         {
             int sign(int a)
             {
@@ -118,61 +118,91 @@ namespace KnotThatFast.Models
                 return -1;
             }
 
-            List<Tuple<int, int>> adj = new List<Tuple<int, int>>();
+            List<int[]> adj = new List<int[]>();
 
+            List<int> temp = new List<int>();
             for (int i = 0; i < this.GaussCode.Count; i++)
             {
-                if (sign(this.GaussCode[i]) == sign(this.GaussCode[i + 1]))
+                temp = new List<int>();
+
+                for (int j = i; j < this.GaussCode.Count; j++)
                 {
-                    adj.Add(new Tuple<int, int>(this.GaussCode[i], this.GaussCode[i + 1]));
+                    if (sign(this.GaussCode[j]) == sign(this.GaussCode[j + 1]))
+                    {
+                        temp.Add(this.GaussCode[j]);
+                        temp.Add(this.GaussCode[j + 1]);
+                        int[] add = temp.Distinct().ToArray();
+                        adj.Add(add);
+                    }
+                    else
+                    {
+                        break;
+                    }
+
                 }
+
             }
 
-            foreach (Tuple<int, int> t in adj)
+            adj = adj.OrderByDescending(a => a.Length).ToList();
+
+            foreach (int[] t in adj)
             {
-                int a = t.Item1;
-                int b = t.Item2;
-                bool exists = this.GaussCode.Exists(c =>
-                    c == -a && this.GaussCode[this.GaussCode.IndexOf(c) + 1] == -b ||
-                    c == -b && this.GaussCode[this.GaussCode.IndexOf(c) + 1] == -a);
-                if (exists)
-                    return new Tuple<int, int>(Math.Abs(a), Math.Abs(b));
+                Tangle test = new Tangle(t);
+                int firstIndex = this.GaussCode.IndexOf(-t[0]);
+                int tempFirst = firstIndex;
+                int[] found = new int[t.Length];
+                bool dx = true;
+                for (int i = 0; i < t.Length; i++)
+                {
+                    if (dx)
+                    {
+                        if (t.Contains(-this.GaussCode[firstIndex]))
+                        {
+                            found[i] = -this.GaussCode[firstIndex];
+                            firstIndex++;
+                        }
+                        else
+                        {
+                            dx = false;
+                            i--;
+
+                        }
+                    }
+                    else
+                    {
+                        firstIndex = tempFirst-1;
+                        if (t.Contains(-this.GaussCode[firstIndex]))
+                        {
+                            found[i] = -this.GaussCode[firstIndex];
+                            firstIndex--;
+                        }
+                    }
+
+                }
+
+                Tangle TFound = new Tangle(found);
+
+                if (test.Hash() == TFound.Hash())
+                    return t;
+
             }
-
-            //bool isValidAdj(Tuple<int, int> a, Tuple<int, int> b)
-            //{
-            //    return
-            //        (this.GaussCode[a.Item1] == -this.GaussCode[b.Item1] &&
-            //            this.GaussCode[a.Item2] == -this.GaussCode[b.Item2]) ||
-            //        (this.GaussCode[a.Item2] == -this.GaussCode[b.Item1] &&
-            //        this.GaussCode[a.Item1] == -this.GaussCode[b.Item2]);
-            //}
-
-            //for (int i = 0; i < adj.Count - 1; i++)
-            //{
-            //    for (int j = i + 1; j < adj.Count; j++)
-            //    {
-            //        if (isValidAdj(adj[i], adj[j]))
-            //            return new Tuple<int, int>(adj[i].Item1, adj[j].Item1);
-            //    }
-
-            //}
 
             return null;
         }
 
-        private void PerformReductionMove2(int c1, int c2)
+        private void PerformReductionMove2(int[] crosses)
         {
-            this.GaussCode.Remove(c1);
-            this.GaussCode.Remove(-c1);
-            this.GaussCode.Remove(c2);
-            this.GaussCode.Remove(-c2);
+            foreach (int c in crosses)
+            {
+                this.GaussCode.Remove(c);
+                this.GaussCode.Remove(-c);
+            }
         }
 
         #endregion
 
         #region TRA_MOVE1
-        public Tuple<int, int, int, Tangle> getPositionsForTranslationMove1(out bool isContiguous)
+        public Tuple<int, int, int, Tangle> getPositionsForTranslationMove1()
         {
             List<Tangle> tangles = this.Tangles();
             Tuple<int, int, int, Tangle> notContiguousTuple = null;
@@ -184,7 +214,6 @@ namespace KnotThatFast.Models
                 int[] ends = this.GetTangleEnds(tangle);
 
                 bool isTangleContiguous = ends.Length == 2;
-
 
                 int a = this.GaussCode[ends.First()];
                 int b = this.GaussCode[ends.Last()];
@@ -201,7 +230,6 @@ namespace KnotThatFast.Models
                         int insertIndex1 = Tools.Mod(ends.First() + 1, this.GaussCode.Count);
                         int insertIndex2 = Tools.Mod(ends.First() + 2, this.GaussCode.Count);
                         //(c,i1,i2) -> cross, insert index 1, insert index 2
-                        isContiguous = isTangleContiguous;
                         return new Tuple<int, int, int, Tangle>(crossName, insertIndex1, insertIndex2, tangle);
                     }
                 }
@@ -221,6 +249,16 @@ namespace KnotThatFast.Models
                         int insertIndex2 = Tools.Mod(ends[2] + 1, this.GaussCode.Count);
                         //(c,i1,i2) -> cross, insert index 1, insert index 2
                         notContiguousTuple = new Tuple<int, int, int, Tangle>(crossName, insertIndex1, insertIndex2, tangle);
+
+                        //test to see if this translation move will lead to a reduction move
+                        Knot testMoveKnot = new Knot(this);
+                        int? m1 = testMoveKnot.getPositionForReductionMove1();
+                        int[] m2 = testMoveKnot.getPositionsForReductionMove2();
+                        if (m1 != null || m2 != null)
+                            return notContiguousTuple;
+                        else
+                            notContiguousTuple = null;
+
                     }
 
                     if (m == -n && notContainedM)
@@ -230,10 +268,19 @@ namespace KnotThatFast.Models
                         int insertIndex2 = Tools.Mod(ends.Last() + 1, this.GaussCode.Count);
                         //(c,i1,i2) -> cross, insert index 1, insert index 2
                         notContiguousTuple = new Tuple<int, int, int, Tangle>(crossName, insertIndex1, insertIndex2, tangle);
+
+                        //test to see if this translation move will lead to a reduction move
+                        Knot testMoveKnot = new Knot(this);
+                        int? m1 = testMoveKnot.getPositionForReductionMove1();
+                        int[] m2 = testMoveKnot.getPositionsForReductionMove2();
+                        if (m1 != null || m2 != null)
+                            return notContiguousTuple;
+                        else
+                            notContiguousTuple = null;
                     }
                 }
             }
-            isContiguous = false;
+
             return notContiguousTuple;
         }
 
@@ -253,62 +300,99 @@ namespace KnotThatFast.Models
         #endregion
 
         #region TRA_MOVE2
-        private Tuple<int, int, int, int> getPositionsForTranslationMove2(out bool isContinguous)
+        private Tuple<int, int>[] getPositionsForTranslationMove2()
         {
             int sign(int x) { return x < 0 ? -1 : 1; };
 
             List<Tangle> tangles = this.Tangles();
+            tangles = tangles.Where(t => t.nCrosses != 1).OrderByDescending(t => t.nCrosses).ToList();
 
-            Tuple<int, int, int, int> notContiguousTuple = null;
+            List<Tuple<int, int>[]> results = new List<Tuple<int, int>[]>();
 
             foreach (Tangle tangle in tangles)
             {
-                if (tangle.nCrosses == 1)
-                    continue;
-
                 int[] ends = this.GetTangleEnds(tangle);
 
-                int a = this.GaussCode[ends.First()];
-                int b = this.GaussCode[ends.Last()];
+                bool isContiguous = ends.Length == 2;
 
-                if (sign(a) == sign(b))
+                List<int> valEnds = new List<int>();
+                foreach (int i in ends)
                 {
-                    bool existsContiguous = this.GaussCode.Exists(c1 =>
-                        c1 == a && this.GaussCode[this.GaussCode.IndexOf(c1) + 1] == b ||
-                        c1 == b && this.GaussCode[this.GaussCode.IndexOf(c1) + 1] == a);
-                    if (existsContiguous)
+                    int k = this.GaussCode[i];
+                    if (!valEnds.Contains(k) && !valEnds.Contains(-k))
+                        valEnds.Add(k);
+                }
+
+                List<int[]> adj = new List<int[]>();
+
+                List<int> temp = new List<int>();
+                for (int i = 0; i < valEnds.Count; i++)
+                {
+                    temp = new List<int>();
+
+                    for (int j = i; j < valEnds.Count - 1; j++)
                     {
-                        bool isTangleContiguous = ends.Length == 2;
-                        isContinguous = isTangleContiguous;
-                        if (isTangleContiguous)
+                        if (sign(valEnds[j]) == sign(valEnds[j + 1]))
                         {
-                            int newIndex1 = Tools.Mod(ends.First() + 1, this.GaussCode.Count);
-                            int newIndex2 = Tools.Mod(ends.First() + 2, this.GaussCode.Count);
-                            //move index 1, move index 2, new index 1, new index 2
-                            return new Tuple<int, int, int, int>(ends.First(), ends.Last(), newIndex1, newIndex2);
+                            temp.Add(valEnds[j]);
+                            temp.Add(valEnds[j + 1]);
+                            int[] add = temp.Distinct().ToArray();
+                            adj.Add(add);
                         }
                         else
                         {
-                            int index_a = this.GaussCode.IndexOf(-a);
-                            int index_b = this.GaussCode.IndexOf(-b);
-                            bool isContiguousInternToTangle = index_a >= ends[1] && index_a <= ends[2] || index_b >= ends[1] && index_b <= ends[2];
-                            if (!isContiguousInternToTangle)
-                            {
-                                notContiguousTuple = new Tuple<int, int, int, int>(ends.First(), ends.Last(), index_a, index_b);
-                            }
-
+                            break;
                         }
+
                     }
+
+                }
+
+                adj = adj.OrderByDescending(a => a.Length).ToList();
+
+                foreach (int[] t in adj)
+                {
+                    bool exists = true;
+                    int firstIndex = this.GaussCode.IndexOf(-t[0]);
+                    for (int i = 0; i < t.Length; i++)
+                    {
+                        exists &= this.GaussCode[firstIndex] == -t[i];
+                        firstIndex++;
+                    }
+
+                    if (exists)
+                    {
+                        int lastIndex = this.GaussCode.IndexOf(t.Last());
+                        Tuple<int, int>[] positions = new Tuple<int, int>[t.Length];
+                        for (int i = 0; i < t.Length; i++)
+                        {
+                            positions[i] = new Tuple<int, int>(Math.Abs(t[i]), lastIndex);
+                        }
+                        results.Add(positions);
+                    }
+
+
                 }
             }
-            isContinguous = false;
-            return notContiguousTuple;
+            if (results.Count == 0) return null;
+
+            Tuple<int, int>[] result = results[0];
+            foreach (var t in results)
+            {
+                if (t.Length > result.Length)
+                    result = t;
+            }
+
+            return result;
         }
 
-        private void PerformTranslationMove2(Tuple<int, int, int, int> t)
+        private void PerformTranslationMove2(Tuple<int, int>[] tuple)
         {
-            this.GaussCode.Move(t.Item1, t.Item3);
-            this.GaussCode.Move(t.Item2, t.Item4);
+            foreach (Tuple<int, int> t in tuple)
+            {
+                int index = this.GaussCode.IndexOf(t.Item1);
+                this.GaussCode.Move(index, t.Item2);
+            }
         }
         #endregion
         #endregion
@@ -544,14 +628,12 @@ namespace KnotThatFast.Models
         {
             Knot kstep = new Knot(knot);
 
-            Tuple<int, int> m2 = kstep.getPositionsForReductionMove2();
+            int[] m2 = kstep.getPositionsForReductionMove2();
             if (m2 != null)
             {
-                Debug.Print("Reduction Move 2");
-                Debug.Print("Removing " + kstep.GaussCode[m2.Item1] + " and " + kstep.GaussCode[m2.Item2]);
                 Debug.Print("Before: " + kstep);
                 //reduction move 2
-                kstep.PerformReductionMove2(m2.Item1, m2.Item2);
+                kstep.PerformReductionMove2(m2);
                 Debug.Print("After: " + kstep);
             }
             else
@@ -568,19 +650,16 @@ namespace KnotThatFast.Models
                 }
                 else
                 {
-                    bool contiguoust2 = false;
-                    bool contiguoust1 = false;
+                    Tuple<int, int, int, Tangle> t1 = kstep.getPositionsForTranslationMove1();
+                    Tuple<int, int>[] t2 = kstep.getPositionsForTranslationMove2();
 
-                    Tuple<int, int, int, int> t2 = kstep.getPositionsForTranslationMove2(out contiguoust2);
-                    Tuple<int, int, int, Tangle> t1 = kstep.getPositionsForTranslationMove1(out contiguoust1);
-
-                    if (contiguoust1)
+                    if (t1 != null)
                     {
                         kstep.PerformTranslationMove1(t1.Item1, t1.Item2, t1.Item3, t1.Item4);
                     }
                     else
                     {
-                        if (contiguoust2)
+                        if (t2 != null)
                         {
                             kstep.PerformTranslationMove2(t2);
                         }
@@ -613,7 +692,7 @@ namespace KnotThatFast.Models
                     solved = Knot.Step(solved);
                     Debug.Print("\nstep\n");
                 }
-                catch (ArgumentException)
+                catch (ArgumentException e)
                 {
                     triedEveryOperation = true;
                 }
@@ -631,27 +710,20 @@ namespace KnotThatFast.Models
             if (!knot.IsSolved)
                 knot = Knot.Solve(knot);
 
-            List<Tangle> tangles = knot.Tangles()
+            List<int> tangles = knot.Tangles()
                 .Where(t => knot.IsContiguousTangle(t))
                 .OrderBy(t => t.nCrosses)
+                .Select(t => t.nCrosses)
                 .ToList();
 
-            bool found = false;
-            for (int i = tangles.Count - 1; i > 0; i--)
+            foreach (int t in tangles)
             {
-                found = false;
-                for (int j = i - 1; j >= 0; j--)
+                if (!factors.Exists(i => factors.Contains(Math.Abs(t - i))))
                 {
-                    found |= tangles[i].Crosses.Intersect(tangles[j].Crosses).Count() != 0;
-                }
-
-                if (!found)
-                {
-                    factors.Add(tangles[i].nCrosses);
+                    factors.Add(t);
                 }
             }
 
-            factors.Add(tangles.First().nCrosses);
 
             return factors.ToArray();
 

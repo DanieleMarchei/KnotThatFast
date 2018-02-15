@@ -39,10 +39,12 @@ namespace KnotThatFast.CustomControllers
             //TEST
             //Knot knot = new Knot(new List<int>() { 4, -1, 2, 5, 8, -9, 10, -7, 6, -3, 1, -2, 3, -4, -5, -6, 7, -8, 9, -10 });
             //Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 7, 8, 4, -5, 6, -7, -8 });
-            Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 4, -5, 6, -7, 8, -9, 10, -8, 7, -10, 9 });
+            //Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 4, -5, 6, -7, 8, -9, 10, -8, 7, -10, 9 });
+            //Knot knot = new Knot(new List<int>() { 1, -2, 3, 4, 5, 6, -6, -5, -4, -1, 2, -3 });
+            Knot knot = new Knot(new List<int>() { 1, -2, 3, 4, 5, -6, 7, -8, 9, -10, 2, -3, 10, -1, -4, -9, 8, -5, 6, -7 });
 
-            //knot = Knot.Solve(knot);
-            int[] factors = Knot.Factorize(knot);
+            knot = Knot.Solve(knot);
+            //int[] factors = Knot.Factorize(knot);
         }
 
         private void canvas_pic_MouseClick(object sender, MouseEventArgs e)

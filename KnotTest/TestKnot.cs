@@ -60,9 +60,8 @@ namespace KnotTest
         public void TestSolveHardUnknot1()
         {
             Knot knot = new Knot(new List<int>() { 4, -1, 2, 5, 8, -9, 10, -7, 6, -3, 1, -2, 3, -4, -5, -6, 7, -8, 9, -10 });
-            Knot unknot = new Knot();
             knot = Knot.Solve(knot);
-            Assert.AreEqual(knot, unknot);
+            Assert.IsTrue(knot.IsUnknot);
         }
 
         [TestMethod]
@@ -167,12 +166,12 @@ namespace KnotTest
         {
             Knot knot = new Knot(new List<int>() { 1, -2, 3, 4, 5, 6, -6, -5, -4, -1, 2, -3 });
             PrivateObject obj = new PrivateObject(knot);
-            Tuple<int, int> test = (Tuple<int, int>)obj.Invoke("getPositionsForReductionMove2");
+            int[] test = (int[])obj.Invoke("getPositionsForReductionMove2");
             
             if (test != null)
             {
-                Assert.AreEqual(4, test.Item1);
-                Assert.AreEqual(5, test.Item2);
+                Assert.AreEqual(4, test[0]);
+                Assert.AreEqual(5, test[1]);
             }
             else
                 Assert.Fail();
@@ -228,7 +227,7 @@ namespace KnotTest
         public void TestFactorEasy1()
         {
             Knot knot = new Knot(new List<int>() { -1, 2, -3, 1, -2, 3, -4, 5, -6, 4, -5, 6, -7, 8, -9, 10, -8, 7, -10, 9 });
-            int[] expected = new int[3] { 4, 3, 3};
+            int[] expected = new int[3] {3, 3, 4};
             int[] factors = Knot.Factorize(knot);
             bool isEqual = Enumerable.SequenceEqual(expected, factors);
             Assert.AreEqual(true, isEqual);

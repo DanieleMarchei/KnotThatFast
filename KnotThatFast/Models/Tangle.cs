@@ -17,7 +17,7 @@ namespace KnotThatFast.Models
         }
 
         public Tangle(int[] crosses)
-        {
+        {            
             Crosses = crosses;
         }
 
