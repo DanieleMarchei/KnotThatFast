@@ -627,14 +627,11 @@ namespace KnotThatFast.Models
         static public Knot Step(Knot knot)
         {
             Knot kstep = new Knot(knot);
-
             int[] m2 = kstep.getPositionsForReductionMove2();
             if (m2 != null)
             {
-                Debug.Print("Before: " + kstep);
                 //reduction move 2
                 kstep.PerformReductionMove2(m2);
-                Debug.Print("After: " + kstep);
             }
             else
             {
@@ -642,11 +639,7 @@ namespace KnotThatFast.Models
                 int? m1 = kstep.getPositionForReductionMove1();
                 if (m1 != null)
                 {
-                    Debug.Print("Reduction Move 1");
-                    Debug.Print("Removing " + kstep.GaussCode[m1.Value]);
-                    Debug.Print("Before: " + kstep);
                     kstep.PerformReductionMove1(m1.Value);
-                    Debug.Print("After: " + kstep);
                 }
                 else
                 {
@@ -665,8 +658,6 @@ namespace KnotThatFast.Models
                         }
                         else
                         {
-                            //should check for all possible untangling paths 
-                            //until a set of translation moves leads to a reduction move
                             throw new ArgumentException("No step available");
                         }
                     }
@@ -679,7 +670,7 @@ namespace KnotThatFast.Models
 
         static public Knot Solve(Knot knot)
         {
-            if (knot.IsUnknot) return knot;
+            if (knot.IsUnknot || knot.IsSolved) return knot;
 
             Knot solved = new Knot(knot);
 
@@ -690,7 +681,6 @@ namespace KnotThatFast.Models
                 try
                 {
                     solved = Knot.Step(solved);
-                    Debug.Print("\nstep\n");
                 }
                 catch (ArgumentException e)
                 {
